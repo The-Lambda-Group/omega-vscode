@@ -8,9 +8,9 @@ const fetchDatastoreChildren: (
     case NodeType.DATASTORE:
       const nodeCasted: DatastoreNode = node as DatastoreNode;
       let query = `
-      (= Reg (datastore-record {"backend": "CouchDB", "name": "${nodeCasted.label}"}))
-      (raw-query Reg {"selector": {"_id": {"$exists": true}}} Result)
-      (return Result)
+        (= Reg (datastore-record {"backend": "CouchDB", "name": "${nodeCasted.label}"}))
+        (raw-query Reg {"selector": {"type": "term", "functor": {"name": "is-datastore", "arity": 1}}} Result)
+        (return Result)
       `;
       let res = await axios
         .post(`${nodeCasted.host}/query`, query, {
@@ -21,36 +21,32 @@ const fetchDatastoreChildren: (
         })
         .then((res) => res.data.result);
       console.log({ res });
-      return [];
+      const datastores = res.map((term: any) => {
+        const dsName = term.args[0]["ds-name"];
+        const result = newDatastoreNode({ dsName, host: nodeCasted.host });
+        return result;
+      });
+      console.log({ datastores });
+      return datastores;
   }
 };
 
 export class NodeDependenciesProvider
   implements vscode.TreeDataProvider<DBNodeTreeItem>
 {
-  constructor(private workspaceRoot: string) {}
-
   getTreeItem(element: DBNodeTreeItem): vscode.TreeItem {
     return element;
   }
 
   getChildren(element?: DBNodeTreeItem): Thenable<DBNodeTreeItem[]> {
-    if (!this.workspaceRoot) {
-      vscode.window.showInformationMessage("No dependency in empty workspace");
-      return Promise.resolve([]);
-    }
-
     if (element) {
       return fetchDatastoreChildren(element.nodeData!);
     } else {
-      return Promise.resolve([
-        intoTreeItem(
-          newDatastoreNode({
-            dsName: "ds.omegadb.io/registry",
-            host: "http://localhost:3000",
-          })
-        ),
-      ]);
+      let topNode = newDatastoreNode({
+        dsName: "ds.omegadb.io/registry",
+        host: "http://localhost:3000",
+      });
+      return fetchDatastoreChildren(topNode);
     }
   }
 
@@ -120,7 +116,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.workspace.workspaceFolders.length > 0
       ? vscode.workspace.workspaceFolders[0].uri.fsPath
       : undefined;
-  const nodeDependenciesProvider = new NodeDependenciesProvider(rootPath!);
+  const nodeDependenciesProvider = new NodeDependenciesProvider();
   vscode.window.registerTreeDataProvider(
     "omegaDatastores",
     nodeDependenciesProvider

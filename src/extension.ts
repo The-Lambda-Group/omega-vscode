@@ -1,28 +1,37 @@
 import * as vscode from "vscode";
 import axios, { AxiosResponse, AxiosError } from "axios";
 
-const responseToDBNode: (data: any) => DBNode = (data) => {
-  console.log(data);
+const responseToDBNode: (data: any, datastore: DatastoreNode) => DBNode = (
+  data,
+  datastore
+) => {
+  // console.log(data);
   switch (data.type) {
     case "functor":
       return newFunctorNode({
         arity: data.arity,
         name: data.name,
+        datastore,
       });
     case "clause":
       return newClauseNode({
-        head: responseToDBNode(data.head) as TermNode,
-        body: responseToDBNode(data.body),
+        head: responseToDBNode(data.head, datastore) as TermNode,
+        body: responseToDBNode(data.body, datastore),
       });
     case "term":
       return newTermNode({
         args: data.args.map(responseToDBNode),
-        functor: responseToDBNode(data.functor) as FunctorNode,
+        functor: responseToDBNode(data.functor, datastore) as FunctorNode,
+        datastore,
       });
     case "value":
       return newValueNode({
         data: data["value-data"],
         valueType: data["value-type"],
+      });
+    case "json":
+      return newJsonNode({
+        data: data["data"],
       });
     default:
       throw new Error(`DATA_TYPE_NOT_RECOGNIZED TYPE=${data.type}`);
@@ -53,7 +62,7 @@ const fetchRegistryChildren: (
   const datastores = res.map((term: any) => {
     const dsName = term.args[0]["ds-name"];
     const result = newDatastoreNode({ dsName, host: node.host });
-    return intoTreeItem(result);
+    return intoTreeItem(result, result);
   });
   return datastores;
 };
@@ -67,14 +76,11 @@ const fetchDatastoreChildren: (
         {
           type: "functor",
         },
-        {
-          type: "clause",
-        },
       ],
     },
   };
   let dsName = node.label;
-  console.log({ dsName });
+  // console.log({ dsName });
   let jsonQueryString = JSON.stringify(jsonQuery);
   let query = `
       (= Reg (datastore-record {"backend": "CouchDB", "name": "${dsName}"}))
@@ -89,10 +95,80 @@ const fetchDatastoreChildren: (
       return e;
     })
     .then((res) => res.data.result);
-  console.log({ res });
-  const nodes = res.map(responseToDBNode).map(intoTreeItem);
-  console.log({ nodes });
+  // console.log({ res });
+  const nodes = res
+    .map((x) => responseToDBNode(x, node))
+    .map((x) => intoTreeItem(x, node));
+  // console.log({ nodes });
   return nodes;
+};
+
+const fetchFunctorChildren: (
+  node: FunctorNode
+) => Promise<DBNodeTreeItem[]> = async (node) => {
+  let jsonQuery = {
+    selector: {
+      $or: [
+        {
+          type: "term",
+          functor: {
+            name: node.name,
+            arity: node.arity,
+          },
+        },
+        {
+          type: "clause",
+          head: {
+            functor: {
+              name: node.name,
+              arity: node.arity,
+            },
+          },
+        },
+      ],
+    },
+  };
+  const datastore = node.datastore;
+  let dsName = datastore.label;
+  // console.log({ dsName });
+  let jsonQueryString = JSON.stringify(jsonQuery);
+  let query = `
+      (= Reg (datastore-record {"backend": "CouchDB", "name": "${dsName}"}))
+      (raw-query Reg ${jsonQueryString} Result)
+      (return Result)
+    `;
+  let res: any[] = await axios
+    .post(`${datastore.host}/query`, query, {
+      headers: { "Content-Type": "http/plain-text" },
+    })
+    .catch((e) => {
+      return e;
+    })
+    .then((res) => res.data.result);
+  console.log({
+    type: "functor-response",
+    res,
+    functor: `${node.name}(${node.arity})`,
+  });
+  const nodes = res
+    .map((x) => responseToDBNode(x, datastore))
+    .map((x) => intoTreeItem(x, datastore));
+  console.log({
+    type: "functor",
+    functor: `${node.name}(${node.arity})`,
+    res,
+    nodes,
+  });
+  // console.log({ nodes });
+  return nodes;
+};
+
+const fetchTermChildren: (node: TermNode) => Promise<DBNodeTreeItem[]> = async (
+  node
+) => {
+  const children = node.args.map((arg) => intoTreeItem(arg, node.datastore));
+  console.log({ type: "term-children", children: children });
+  return children;
 };
 
 const fetchDBNodeChildren: (node: DBNode) => Promise<DBNodeTreeItem[]> = async (
@@ -104,8 +180,12 @@ const fetchDBNodeChildren: (node: DBNode) => Promise<DBNodeTreeItem[]> = async (
     case NodeType.REGISTRY_DATASTORE:
       return fetchRegistryChildren(node as RegistryNode);
     case NodeType.FUNCTOR:
-      return Promise.resolve([]);
+      return fetchFunctorChildren(node as FunctorNode);
     case NodeType.CLAUSE:
+      return Promise.resolve([]);
+    case NodeType.TERM:
+      return fetchTermChildren(node as TermNode);
+    case NodeType.JSON:
       return Promise.resolve([]);
   }
 };
@@ -147,6 +227,8 @@ enum NodeType {
   REGISTRY_DATASTORE,
   FUNCTOR,
   CLAUSE,
+  TERM,
+  JSON,
 }
 
 interface DBNode {
@@ -164,6 +246,7 @@ interface RegistryNode extends DatastoreNode {}
 interface FunctorNode extends DBNode {
   arity: number;
   name: string;
+  datastore: DatastoreNode;
 }
 
 interface ClauseNode extends DBNode {
@@ -174,6 +257,7 @@ interface ClauseNode extends DBNode {
 interface TermNode extends DBNode {
   functor: FunctorNode;
   args: DBNode[];
+  datastore: DatastoreNode;
 }
 
 enum ValueType {
@@ -183,6 +267,10 @@ enum ValueType {
 
 interface ValueNode extends DBNode {
   valueType: ValueType;
+  data: any;
+}
+
+interface JsonNode extends DBNode {
   data: any;
 }
 
@@ -197,15 +285,24 @@ const newValueNode: (config: {
   nodeType: NodeType.CLAUSE,
 });
 
+const newJsonNode: (config: { data: any }) => JsonNode = ({ data }) => ({
+  data,
+  label: "json",
+  iconPath: new vscode.ThemeIcon("json"),
+  nodeType: NodeType.JSON,
+});
+
 const newTermNode: (config: {
   functor: FunctorNode;
   args: DBNode[];
-}) => TermNode = ({ functor, args }) => ({
+  datastore: DatastoreNode;
+}) => TermNode = ({ functor, args, datastore }) => ({
   functor,
   args,
-  label: functor.label,
+  label: "Terms",
   iconPath: new vscode.ThemeIcon("json"),
-  nodeType: NodeType.CLAUSE,
+  nodeType: NodeType.TERM,
+  datastore,
 });
 
 const newClauseNode: (config: {
@@ -214,7 +311,7 @@ const newClauseNode: (config: {
 }) => ClauseNode = ({ head, body }) => ({
   head,
   body,
-  label: head.label,
+  label: "Clause",
   iconPath: new vscode.ThemeIcon("json"),
   nodeType: NodeType.CLAUSE,
 });
@@ -242,33 +339,43 @@ const newRegistryDatastoreNode: (config: {
 const newFunctorNode: (config: {
   arity: number;
   name: string;
-}) => FunctorNode = ({ arity, name }) => ({
+  datastore: DatastoreNode;
+}) => FunctorNode = ({ arity, name, datastore }) => ({
   iconPath: new vscode.ThemeIcon("json"),
   arity,
   name: name,
-  label: name,
+  label: `${name}(${arity})`,
   nodeType: NodeType.FUNCTOR,
+  datastore,
 });
 
-const intoTreeItem: (node: DBNode) => DBNodeTreeItem = (nodeData) =>
+const intoTreeItem: (
+  node: DBNode,
+  datastore: DatastoreNode
+) => DBNodeTreeItem = (nodeData, datastore) =>
   new DBNodeTreeItem({
     nodeData,
     collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
+    datastore,
   });
 
 class DBNodeTreeItem extends vscode.TreeItem {
   nodeData: DBNode;
+  datastore: DatastoreNode;
 
   constructor({
     nodeData,
     collapsibleState,
+    datastore,
   }: {
     nodeData: DBNode;
     collapsibleState: vscode.TreeItemCollapsibleState;
+    datastore: DatastoreNode;
   }) {
     super(nodeData.label, collapsibleState);
     this.iconPath = nodeData.iconPath;
     this.nodeData = nodeData;
+    this.datastore = datastore;
   }
 }
 

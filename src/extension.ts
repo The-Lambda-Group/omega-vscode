@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import axios, { AxiosResponse, AxiosError } from "axios";
+import { JsonNode, fetchJsonChildren, newJsonNode } from "./tree_node/data_type/json";
 
 const responseToDBNode: (data: any, datastore: DatastoreNode) => DBNode = (
   data,
@@ -32,6 +33,7 @@ const responseToDBNode: (data: any, datastore: DatastoreNode) => DBNode = (
     case "json":
       return newJsonNode({
         data: data["data"],
+        datastore,
       });
     default:
       throw new Error(`DATA_TYPE_NOT_RECOGNIZED TYPE=${data.type}`);
@@ -130,7 +132,6 @@ const fetchFunctorChildren: (
   };
   const datastore = node.datastore;
   let dsName = datastore.label;
-  // console.log({ dsName });
   let jsonQueryString = JSON.stringify(jsonQuery);
   let query = `
       (= Reg (datastore-record {"backend": "CouchDB", "name": "${dsName}"}))
@@ -145,21 +146,9 @@ const fetchFunctorChildren: (
       return e;
     })
     .then((res) => res.data.result);
-  console.log({
-    type: "functor-response",
-    res,
-    functor: `${node.name}(${node.arity})`,
-  });
   const nodes = res
     .map((x) => responseToDBNode(x, datastore))
     .map((x) => intoTreeItem(x, datastore));
-  console.log({
-    type: "functor",
-    functor: `${node.name}(${node.arity})`,
-    res,
-    nodes,
-  });
-  // console.log({ nodes });
   return nodes;
 };
 
@@ -167,7 +156,6 @@ const fetchTermChildren: (node: TermNode) => Promise<DBNodeTreeItem[]> = async (
   node
 ) => {
   const children = node.args.map((arg) => intoTreeItem(arg, node.datastore));
-  console.log({ type: "term-children", children: children });
   return children;
 };
 
@@ -186,7 +174,7 @@ const fetchDBNodeChildren: (node: DBNode) => Promise<DBNodeTreeItem[]> = async (
     case NodeType.TERM:
       return fetchTermChildren(node as TermNode);
     case NodeType.JSON:
-      return Promise.resolve([]);
+      return fetchJsonChildren(node as JsonNode);
   }
 };
 
@@ -222,7 +210,7 @@ export class NodeDependenciesProvider
   }
 }
 
-enum NodeType {
+export enum NodeType {
   DATASTORE,
   REGISTRY_DATASTORE,
   FUNCTOR,
@@ -231,13 +219,14 @@ enum NodeType {
   JSON,
 }
 
-interface DBNode {
+export interface DBNode {
   nodeType: NodeType;
   label: string;
   iconPath: string | vscode.ThemeIcon;
+  getCollapsibleState?: (node: DBNode) => vscode.TreeItemCollapsibleState;
 }
 
-interface DatastoreNode extends DBNode {
+export interface DatastoreNode extends DBNode {
   host: string;
 }
 
@@ -270,10 +259,6 @@ interface ValueNode extends DBNode {
   data: any;
 }
 
-interface JsonNode extends DBNode {
-  data: any;
-}
-
 const newValueNode: (config: {
   valueType: ValueType;
   data: any;
@@ -285,13 +270,6 @@ const newValueNode: (config: {
   nodeType: NodeType.CLAUSE,
 });
 
-const newJsonNode: (config: { data: any }) => JsonNode = ({ data }) => ({
-  data,
-  label: "json",
-  iconPath: new vscode.ThemeIcon("json"),
-  nodeType: NodeType.JSON,
-});
-
 const newTermNode: (config: {
   functor: FunctorNode;
   args: DBNode[];
@@ -300,7 +278,7 @@ const newTermNode: (config: {
   functor,
   args,
   label: "Terms",
-  iconPath: new vscode.ThemeIcon("json"),
+  iconPath: new vscode.ThemeIcon("symbol-array"),
   nodeType: NodeType.TERM,
   datastore,
 });
@@ -312,7 +290,7 @@ const newClauseNode: (config: {
   head,
   body,
   label: "Clause",
-  iconPath: new vscode.ThemeIcon("json"),
+  iconPath: new vscode.ThemeIcon("code"),
   nodeType: NodeType.CLAUSE,
 });
 
@@ -341,7 +319,7 @@ const newFunctorNode: (config: {
   name: string;
   datastore: DatastoreNode;
 }) => FunctorNode = ({ arity, name, datastore }) => ({
-  iconPath: new vscode.ThemeIcon("json"),
+  iconPath: new vscode.ThemeIcon("symbol-method"),
   arity,
   name: name,
   label: `${name}(${arity})`,
@@ -349,17 +327,22 @@ const newFunctorNode: (config: {
   datastore,
 });
 
-const intoTreeItem: (
+export const intoTreeItem: (
   node: DBNode,
-  datastore: DatastoreNode
-) => DBNodeTreeItem = (nodeData, datastore) =>
+  datastore: DatastoreNode,
+  config?: { collapsibleState?: vscode.TreeItemCollapsibleState }
+) => DBNodeTreeItem = (
+  nodeData,
+  datastore,
+  { collapsibleState = vscode.TreeItemCollapsibleState.Expanded } = {}
+) =>
   new DBNodeTreeItem({
     nodeData,
-    collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
+    collapsibleState,
     datastore,
   });
 
-class DBNodeTreeItem extends vscode.TreeItem {
+export class DBNodeTreeItem extends vscode.TreeItem {
   nodeData: DBNode;
   datastore: DatastoreNode;
 

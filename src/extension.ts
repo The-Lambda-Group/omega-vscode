@@ -1,6 +1,10 @@
 import * as vscode from "vscode";
 import axios, { AxiosResponse, AxiosError } from "axios";
-import { JsonNode, fetchJsonChildren, newJsonNode } from "./tree_node/data_type/json";
+import {
+  JsonNode,
+  fetchJsonChildren,
+  newJsonNode,
+} from "./tree_node/data_type/json";
 
 const responseToDBNode: (data: any, datastore: DatastoreNode) => DBNode = (
   data,
@@ -329,16 +333,10 @@ const newFunctorNode: (config: {
 
 export const intoTreeItem: (
   node: DBNode,
-  datastore: DatastoreNode,
-  config?: { collapsibleState?: vscode.TreeItemCollapsibleState }
-) => DBNodeTreeItem = (
-  nodeData,
-  datastore,
-  { collapsibleState = vscode.TreeItemCollapsibleState.Expanded } = {}
-) =>
+  datastore: DatastoreNode
+) => DBNodeTreeItem = (nodeData, datastore) =>
   new DBNodeTreeItem({
     nodeData,
-    collapsibleState,
     datastore,
   });
 
@@ -348,13 +346,15 @@ export class DBNodeTreeItem extends vscode.TreeItem {
 
   constructor({
     nodeData,
-    collapsibleState,
     datastore,
   }: {
     nodeData: DBNode;
-    collapsibleState: vscode.TreeItemCollapsibleState;
     datastore: DatastoreNode;
   }) {
+    const overrideCollapsibleState =
+      nodeData.getCollapsibleState && nodeData.getCollapsibleState(nodeData);
+    const collapsibleState =
+      overrideCollapsibleState ?? vscode.TreeItemCollapsibleState.Expanded;
     super(nodeData.label, collapsibleState);
     this.iconPath = nodeData.iconPath;
     this.nodeData = nodeData;

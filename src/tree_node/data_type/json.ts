@@ -9,7 +9,10 @@ import {
 
 const getJsonNodeCollapsibleState: (
   node: JsonNode
-) => vscode.TreeItemCollapsibleState = ({ data }) => {
+) => vscode.TreeItemCollapsibleState = ({ data, isEntry }) => {
+  if (isEntry) {
+    return vscode.TreeItemCollapsibleState.Expanded;
+  }
   switch (jsonDataToType(data)) {
     case JsonDataType.JSON_ARRAY:
       return vscode.TreeItemCollapsibleState.Collapsed;
@@ -27,9 +30,9 @@ export interface JsonNode extends DBNode {
 }
 
 enum JsonDataType {
-  JSON_PRIM,
-  JSON_ARRAY,
-  JSON_OBJ,
+  JSON_PRIM = "prim",
+  JSON_ARRAY = "array",
+  JSON_OBJ = "obj",
 }
 
 const jsonDataToType: (data: any) => JsonDataType = (data) => {

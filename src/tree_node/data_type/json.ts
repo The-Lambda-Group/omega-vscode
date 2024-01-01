@@ -1,32 +1,73 @@
 import * as vscode from "vscode";
-import {
-  DBNode,
-  DBNodeTreeItem,
-  DatastoreNode,
-  NodeType,
-  intoTreeItem,
-} from "../../extension";
+import { DBNode, DBNodeTreeItem, intoTreeItem } from "../../extension";
+import { DatastoreNode } from "./datastore";
 
-const getJsonNodeCollapsibleState: (
-  node: JsonNode
-) => vscode.TreeItemCollapsibleState = ({ data, isEntry }) => {
-  if (isEntry) {
-    return vscode.TreeItemCollapsibleState.Expanded;
-  }
-  switch (jsonDataToType(data)) {
-    case JsonDataType.JSON_ARRAY:
-      return vscode.TreeItemCollapsibleState.Collapsed;
-    case JsonDataType.JSON_OBJ:
-      return vscode.TreeItemCollapsibleState.Expanded;
-    case JsonDataType.JSON_PRIM:
-      return vscode.TreeItemCollapsibleState.None;
-  }
-};
-
-export interface JsonNode extends DBNode {
+export class JsonNode implements DBNode {
   data: any;
   datastore: DatastoreNode;
   isEntry: boolean;
+  label: string;
+  iconPath: string | vscode.ThemeIcon;
+
+  constructor({
+    data,
+    datastore,
+    isEntry = false,
+  }: {
+    data: any;
+    datastore: DatastoreNode;
+    isEntry?: boolean;
+  }) {
+    this.data = data;
+    this.datastore = datastore;
+    this.isEntry = isEntry;
+    this.iconPath = jsonIcon(data, isEntry);
+    this.label = jsonLabel(data, isEntry);
+  }
+
+  getCollapsibleState(): vscode.TreeItemCollapsibleState {
+    if (this.isEntry) {
+      return vscode.TreeItemCollapsibleState.Expanded;
+    }
+    switch (jsonDataToType(this.data)) {
+      case JsonDataType.JSON_ARRAY:
+        return vscode.TreeItemCollapsibleState.Collapsed;
+      case JsonDataType.JSON_OBJ:
+        return vscode.TreeItemCollapsibleState.Expanded;
+      case JsonDataType.JSON_PRIM:
+        return vscode.TreeItemCollapsibleState.None;
+    }
+  }
+
+  async fetchChildren(): Promise<DBNodeTreeItem[]> {
+    const isArray = Array.isArray(this.data);
+    const isObject = typeof this.data === "object" && this.data !== null;
+    if (!(isArray || isObject)) {
+      return [];
+    }
+    if (this.isEntry) {
+      return [
+        intoTreeItem(
+          new JsonNode({ data: this.data[1], datastore: this.datastore }),
+          this.datastore
+        ),
+      ];
+    }
+    const jsonNodes = isArray
+      ? this.data.map(
+          (child: any) =>
+            new JsonNode({ data: child, datastore: this.datastore })
+        )
+      : Object.entries(this.data).map(
+          (entry) =>
+            new JsonNode({
+              data: entry,
+              datastore: this.datastore,
+              isEntry: true,
+            })
+        );
+    return jsonNodes.map((node: any) => intoTreeItem(node, node.datastore));
+  }
 }
 
 enum JsonDataType {
@@ -74,42 +115,4 @@ const jsonLabel: (data: any, isEntry: boolean) => string = (data, isEntry) => {
     case JsonDataType.JSON_PRIM:
       return JSON.stringify(data);
   }
-};
-
-export const newJsonNode: (config: {
-  data: any;
-  datastore: DatastoreNode;
-  isEntry?: boolean;
-}) => JsonNode = ({ data, datastore, isEntry = false }) => {
-  const iconPath = jsonIcon(data, isEntry);
-  const label = jsonLabel(data, isEntry);
-  const node: JsonNode = {
-    data,
-    label,
-    iconPath,
-    nodeType: NodeType.JSON,
-    datastore,
-    isEntry,
-    getCollapsibleState: getJsonNodeCollapsibleState as any,
-  };
-  return node;
-};
-
-export const fetchJsonChildren: (
-  node: JsonNode
-) => Promise<DBNodeTreeItem[]> = async ({ isEntry, data, datastore }) => {
-  const isArray = Array.isArray(data);
-  const isObject = typeof data === "object" && data !== null;
-  if (!(isArray || isObject)) {
-    return [];
-  }
-  if (isEntry) {
-    return [intoTreeItem(newJsonNode({ data: data[1], datastore }), datastore)];
-  }
-  const jsonNodes = isArray
-    ? data.map((child) => newJsonNode({ data: child, datastore }))
-    : Object.entries(data).map((entry) =>
-        newJsonNode({ data: entry, datastore, isEntry: true })
-      );
-  return jsonNodes.map((node) => intoTreeItem(node, node.datastore));
 };

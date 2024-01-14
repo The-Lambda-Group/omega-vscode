@@ -5,9 +5,8 @@ import {
   DBNodeTreeItem,
   intoTreeItem,
   responseToDBNode,
-} from "../../extension";
+} from "../index";
 import { DatastoreNode } from "./datastore";
-import { ValueNode } from "./primitive";
 
 export enum FunctorNodeType {
   TERM = "term",
@@ -162,6 +161,10 @@ export class TermNode implements DBNode {
     this.datastore = datastore;
     this.label = "Terms";
     this.iconPath = new vscode.ThemeIcon("symbol-array");
+  }
+
+  buildEditQuery(): string {
+    return "Editing Term";
   }
 
   getCollapsibleState: undefined;

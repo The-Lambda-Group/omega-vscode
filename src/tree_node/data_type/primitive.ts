@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { DBNode, DBNodeTreeItem } from "../../extension";
+import { DBNode, DBNodeTreeItem } from "..";
 
 export enum ValueType {
   SYMBOL = "symbol",

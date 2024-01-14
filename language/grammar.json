@@ -1,0 +1,49 @@
+{
+    "scopeName": "source.oql",
+    "fileTypes": ["oql"],
+    "patterns": [
+      {
+        "begin": "\\(:-",
+        "end": "\\)",
+        "name": "meta.predicate.oql",
+        "contentName": "meta.body.oql",
+        "patterns": [
+          {
+            "match": "\\b(is-man)\\b",
+            "name": "keyword.control.oql"
+          },
+          {
+            "match": "\\b(mortal)\\b",
+            "name": "keyword.control.oql"
+          },
+          {
+            "begin": "\\(",
+            "end": "\\)",
+            "name": "meta.function.oql",
+            "patterns": [
+              {
+                "match": "\\b\\w+\\b",
+                "name": "variable.parameter.oql"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "begin": "\\(",
+        "end": "\\)",
+        "name": "meta.function.oql",
+        "patterns": [
+          {
+            "match": "\\b\"\\w+\"\\b",
+            "name": "string.quoted.double.oql"
+          },
+          {
+            "match": "\\b\\d+\\b",
+            "name": "constant.numeric.oql"
+          }
+        ]
+      }
+    ]
+  }
+  

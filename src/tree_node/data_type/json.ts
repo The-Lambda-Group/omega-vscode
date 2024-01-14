@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { DBNode, DBNodeTreeItem, intoTreeItem } from "../../extension";
+import { DBNode, DBNodeTreeItem, intoTreeItem } from "../index";
 import { DatastoreNode } from "./datastore";
 
 export class JsonNode implements DBNode {
@@ -23,6 +23,10 @@ export class JsonNode implements DBNode {
     this.isEntry = isEntry;
     this.iconPath = jsonIcon(data, isEntry);
     this.label = jsonLabel(data, isEntry);
+  }
+
+  buildEditQuery(): string {
+    return "Editing JSON Document";
   }
 
   getCollapsibleState(): vscode.TreeItemCollapsibleState {

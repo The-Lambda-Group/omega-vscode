@@ -12,20 +12,65 @@
   "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
-    "commands": [
+    "languages": [
       {
-        "command": "omega.helloWorld",
-        "title": "Omega: Hello World"
-      },
+        "id": "oql",
+        "aliases": [
+          "OQL",
+          "Omega Query Language",
+          "Omega"
+        ],
+        "extensions": [
+          ".oql"
+        ],
+        "configuration": "./language/config.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "oql",
+        "scope": "source.oql",
+        "path": "./language/grammar.json"
+      }
+    ],
+    "commands": [
       {
         "command": "omega.fetchDatastore",
         "title": "Omega: Refresh",
-        "icon": {
-          "light": "resources/light/refresh.svg",
-          "dark": "resources/dark/refresh.svg"
-        }
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "omega.editEntry",
+        "title": "Omega: Edit Item",
+        "icon": "$(pencil)"
+      },
+      {
+        "command": "omega.deleteEntry",
+        "title": "Omega: Delete Item",
+        "icon": "$(trash)"
       }
     ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "omega.fetchDatastore",
+          "when": "view == omegaDatastores",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "omega.editEntry",
+          "when": "view == omegaDatastores",
+          "group": "inline"
+        },
+        {
+          "command": "omega.deleteEntry",
+          "when": "view == omegaDatastores",
+          "group": "inline"
+        }
+      ]
+    },
     "views": {
       "explorer": [
         {

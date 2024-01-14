@@ -1,11 +1,6 @@
 import axios from "axios";
 import * as vscode from "vscode";
-import {
-  DBNode,
-  DBNodeTreeItem,
-  intoTreeItem,
-  responseToDBNode,
-} from "../../extension";
+import { DBNode, DBNodeTreeItem, intoTreeItem } from "../index";
 import { FunctorNode, FunctorNodeType } from "./clause";
 
 export class DatastoreNode implements DBNode {

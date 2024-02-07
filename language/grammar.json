@@ -13,6 +13,10 @@
     }
   ],
   "repository": {
+    "datastore": {
+      "match": "(?<=\\()\\w*(?=\\/)",
+      "name": "keyword.control.oql"
+    },
     "solver": {
       "begin": "(\\(:-)",
       "beginCaptures": {
@@ -58,10 +62,32 @@
       "name": "meta.expression.oql",
       "patterns": [
         {
+          "begin": "(?<=\\()",
+          "beginCaptures": {
+            "1": {
+              "name": "keyword.control.oql"
+            }
+          },
+          "end": "(?=\\))",
+          "name": "meta.definition.global.oql",
+          "patterns": [
+            {
+              "include": "$self"
+            },
+            {
+              "include": "#datastore"
+            }
+          ]
+
+        },
+        {
           "include": "#string"
         },
         {
           "include": "#self"
+        },
+        {
+          "include": "#datastore"
         }
       ]
     },

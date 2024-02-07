@@ -15,7 +15,7 @@
   "repository": {
     "datastore": {
       "match": "(?<=\\()\\w*(?=\\/)",
-      "name": "keyword.control.oql"
+      "name": "storage.type.oql"
     },
     "solver": {
       "begin": "(\\(:-)",

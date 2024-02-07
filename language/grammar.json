@@ -3,10 +3,68 @@
   "scopeName": "source.oql",
   "patterns": [
     {
+      "include": "#solver"
+    },
+    {
+      "include": "#sexp"
+    },
+    {
       "include": "#string"
     }
   ],
   "repository": {
+    "solver": {
+      "begin": "(\\(:-)",
+      "beginCaptures": {
+        "1": {
+          "name": "keyword.control.begin.oql"
+        }
+      },
+      "end": "(?<!\\()",
+      "endCaptures": {
+        "1": {
+          "name": "keyword.control.end.oql"
+        }
+      },
+      "name": "keyword.control.oql",
+      "patterns": [
+        {
+          "include": "#sexp"
+        },
+        {
+          "include": "#string"
+        }
+      ]
+    },
+    "sexp": {
+			"begin": "(\\()",
+			"beginCaptures": {
+				"1": {
+					"name": "punctuation.section.expression.begin.oql"
+				}
+			},
+			"end": "(\\))$|(\\)(?=[\\}\\]\\)\\s]*(?:;|$)))|(\\))",
+			"endCaptures": {
+				"1": {
+					"name": "punctuation.section.expression.end.trailing.oql"
+				},
+				"2": {
+					"name": "punctuation.section.expression.end.trailing.oql"
+				},
+				"3": {
+					"name": "punctuation.section.expression.end.oql"
+				}
+			},
+      "name": "meta.expression.oql",
+      "patterns": [
+        {
+          "include": "#string"
+        },
+        {
+          "include": "#self"
+        }
+      ]
+    },
     "string": {
       "begin": "(?<!\\\\)(\")",
       "beginCaptures": {

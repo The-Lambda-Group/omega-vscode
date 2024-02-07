@@ -29,7 +29,7 @@
     "grammars": [
       {
         "language": "oql",
-        "scope": "source.oql",
+        "scopeName": "source.oql",
         "path": "./language/grammar.json"
       }
     ],

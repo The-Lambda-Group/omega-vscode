@@ -1,49 +1,32 @@
 {
-    "scopeName": "source.oql",
-    "fileTypes": ["oql"],
-    "patterns": [
-      {
-        "begin": "\\(:-",
-        "end": "\\)",
-        "name": "meta.predicate.oql",
-        "contentName": "meta.body.oql",
-        "patterns": [
-          {
-            "match": "\\b(is-man)\\b",
-            "name": "keyword.control.oql"
-          },
-          {
-            "match": "\\b(mortal)\\b",
-            "name": "keyword.control.oql"
-          },
-          {
-            "begin": "\\(",
-            "end": "\\)",
-            "name": "meta.function.oql",
-            "patterns": [
-              {
-                "match": "\\b\\w+\\b",
-                "name": "variable.parameter.oql"
-              }
-            ]
-          }
-        ]
+  "name": "OQL",
+  "scopeName": "source.oql",
+  "patterns": [
+    {
+      "include": "#string"
+    }
+  ],
+  "repository": {
+    "string": {
+      "begin": "(?<!\\\\)(\")",
+      "beginCaptures": {
+        "1": {
+          "name": "string.begin.oql"
+        }
       },
-      {
-        "begin": "\\(",
-        "end": "\\)",
-        "name": "meta.function.oql",
-        "patterns": [
-          {
-            "match": "\\b\"\\w+\"\\b",
-            "name": "string.quoted.double.oql"
-          },
-          {
-            "match": "\\b\\d+\\b",
-            "name": "constant.numeric.oql"
-          }
-        ]
-      }
-    ]
+      "end": "(\")",
+      "endCaptures": {
+        "1": {
+          "name": "string.end.oql"
+        }
+      },
+      "name": "string.quoted.double.oql",
+      "patterns": [
+        {
+          "match": "\\\\.",
+          "name": "constant.character.escape.oql"
+        }
+      ]
+    }
   }
-  
+}

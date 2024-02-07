@@ -1,0 +1,4 @@
+(:- (DS/is-mortal! X)
+    (= Q 10)
+    (= V "7")
+    (DS/is-man X))

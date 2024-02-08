@@ -3,13 +3,13 @@
   "scopeName": "source.oql",
   "patterns": [
     {
+      "include": "#map"
+    },
+    {
       "include": "#solver"
     },
     {
       "include": "#sexp"
-    },
-    {
-      "include": "#map"
     },
     {
       "include": "#string"
@@ -19,6 +19,9 @@
     },
     {
       "include": "#number"
+    },
+    {
+      "include": "variable"
     }
   ],
   "repository": {
@@ -38,14 +41,15 @@
       "begin": "(\\{)",
       "beginCaptures": {
         "1": {
-          "name": "keyword.control.begin.oql"
+          "name": "punctuation.section.map.begin.oql"
         },
-        "end": "(\\}",
+        "end": "(\\})",
         "endCaptures": {
           "1": {
-            "name": "keyword.control.end.oql"
+            "name": "punctuation.section.map.end.oql"
           }
         },
+        "contentName": "map.content.oql",
         "patterns": [
           {
             "include": "#boolean"
@@ -105,13 +109,13 @@
       "name": "meta.expression.oql",
       "patterns": [
         {
+          "include": "#map"
+        },
+        {
           "include": "#keyfn"
         },
         {
           "include": "#datastore"
-        },
-        {
-          "include": "#map"
         },
         {
           "include": "#boolean"
@@ -121,6 +125,9 @@
         },
         {
           "include": "#number"
+        },
+        {
+          "include": "#variable"
         },
         {
           "include": "#self"
@@ -147,6 +154,10 @@
           "name": "constant.character.escape.oql"
         }
       ]
+    },
+    "variable": {
+      "match": "(?<=\\s|\\()(\\w|-)+(?=\\s|\\))",
+      "name": "meta.symbol.dynamic.oql"
     }
   }
 }

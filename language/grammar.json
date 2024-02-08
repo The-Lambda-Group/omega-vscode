@@ -3,34 +3,39 @@
   "scopeName": "source.oql",
   "patterns": [
     {
-      "include": "#solver"
-    },
-    {
       "include": "#sexp"
     },
     {
-      "include": "#string"
-    },
-    {
-      "include": "#keyfn"
-    },
-    {
-      "include": "#number"
-    },
-    {
-      "include": "#variable"
-    },
-    {
-      "include": "#map"
-    },
-    {
-      "include": "#array"
+      "include": "#value"
     }
   ],
   "repository": {
     "boolean": {
       "match": "(true|false)",
       "name": "constant.language.boolean.oql"
+    },
+    "value": {
+      "name": "constant.language.value.oql",
+      "patterns": [
+        {
+          "include": "#boolean"
+        },
+        {
+          "include": "#string"
+        },
+        {
+          "include": "#number"
+        },
+        {
+          "include": "#map"
+        },
+        {
+          "include": "#array"
+        },
+        {
+          "include": "#variable"
+        }
+      ]
     },
     "datastore": {
       "match": "(?<=\\()\\w*(?=\\/)",
@@ -67,7 +72,7 @@
       ]
     },
     "number": {
-      "match": "((?<=\\s|\\()\\d+(?=\\s|\\)))|(?<=\\s|\\()(\\d+\\.\\d+(?=\\s|\\)))",
+      "match": "(?x)        # turn on extended mode\n  -?        # an optional minus\n  (?:\n    0       # a zero\n    |       # ...or...\n    [1-9]   # a 1-9 character\n    \\d*     # followed by zero or more digits\n  )\n  (?:\n    (?:\n      \\.    # a period\n      \\d+   # followed by one or more digits\n    )?\n    (?:\n      [eE]  # an e character\n      [+-]? # followed by an option +/-\n      \\d+   # followed by one or more digits\n    )?      # make exponent optional\n  )?        # make decimal portion optional",
       "name": "constant.numeric.double.oql"
     },
     "solver": {
@@ -106,7 +111,7 @@
       "name": "punctuation.section.array.oql",
       "patterns": [
         {
-          "include": "#string"
+          "include": "#value"
         }
       ]
     },
@@ -132,28 +137,10 @@
       "name": "meta.expression.oql",
       "patterns": [
         {
-          "include": "#map"
+          "include": "$self"
         },
         {
-          "include": "#keyfn"
-        },
-        {
-          "include": "#datastore"
-        },
-        {
-          "include": "#boolean"
-        },
-        {
-          "include": "#string"
-        },
-        {
-          "include": "#number"
-        },
-        {
-          "include": "#variable"
-        },
-        {
-          "include": "#self"
+          "include": "#value"
         }
       ]
     },

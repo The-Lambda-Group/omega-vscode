@@ -45,6 +45,17 @@
       "match": "(?<=\\()(\\=|datastore-record|return|get)",
       "name": "keyword.control.clojure"
     },
+    "mapkey": {
+      "name": "string.json support.type.property-name.json",
+      "patterns": [
+        {
+          "include": "#string"
+        },
+        {
+          "include": "#symbol"
+        }
+      ]
+    },
     "map": {
       "begin": "(\\{)",
       "beginCaptures": {
@@ -61,13 +72,37 @@
       "contentName": "map.content.oql",
       "patterns": [
         {
-          "include": "#boolean"
+          "comment": "the JSON object key",
+          "include": "#mapkey"
         },
         {
-          "include": "#string"
+          "begin": ":",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.separator.dictionary.key-value.json"
+            }
+          },
+          "end": "(,)|(?=\\})",
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.separator.dictionary.pair.json"
+            }
+          },
+          "name": "meta.structure.dictionary.value.json",
+          "patterns": [
+            {
+              "comment": "the JSON object value",
+              "include": "#value"
+            },
+            {
+              "match": "[^\\s,]",
+              "name": "invalid.illegal.expected-dictionary-separator.json"
+            }
+          ]
         },
         {
-          "include": "$self"
+          "match": "[^\\s\\}]",
+          "name": "invalid.illegal.expected-dictionary-separator.json"
         }
       ]
     },

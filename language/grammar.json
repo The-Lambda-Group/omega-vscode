@@ -16,6 +16,9 @@
     },
     {
       "include": "#keyfn"
+    },
+    {
+      "include": "#number"
     }
   ],
   "repository": {
@@ -48,13 +51,17 @@
             "include": "#boolean"
           },
           {
-            "include": "$string"
+            "include": "#string"
           },
           {
             "include": "$self"
           }
         ]
       }
+    },
+    "number": {
+      "match": "((?<=\\s|\\()\\d+(?=\\s|\\)))|(?<=\\s|\\()(\\d+\\.\\d+(?=\\s|\\)))",
+      "name": "constant.numeric.double.oql"
     },
     "solver": {
       "begin": "(\\(:-)",
@@ -111,6 +118,9 @@
         },
         {
           "include": "#string"
+        },
+        {
+          "include": "#number"
         },
         {
           "include": "#self"

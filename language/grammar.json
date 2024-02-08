@@ -112,6 +112,14 @@
       "patterns": [
         {
           "include": "#value"
+        },
+        {
+          "match": ",",
+          "name": "punctuation.separator.array.oql"
+        },
+        {
+          "match": "[^\\s\\]]",
+          "name": "invalid.illegal.expected-array-separator.oql"
         }
       ]
     },

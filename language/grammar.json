@@ -3,42 +3,57 @@
   "scopeName": "source.oql",
   "patterns": [
     {
-      "include": "map"
-    },
-    {
       "include": "#solver"
     },
     {
       "include": "#sexp"
     },
     {
+      "include": "#map"
+    },
+    {
       "include": "#string"
+    },
+    {
+      "include": "#keyfn"
     }
   ],
   "repository": {
+    "boolean": {
+      "match": "(true|false)",
+      "name": "constant.language.boolean.oql"
+    },
     "datastore": {
       "match": "(?<=\\()\\w*(?=\\/)",
       "name": "storage.type.oql"
     },
-    "boolean": {
-      "match": "(true|false)",
-      "name": "constant.language.boolean.oql"
+    "keyfn": {
+      "match": "(?<=\\()(\\=|datastore-record|return|get)",
+      "name": "keyword.control.clojure"
     },
     "map": {
       "begin": "(\\{)",
       "beginCaptures": {
         "1": {
-          "name": "punctuation.section.map.begin.oql"
+          "name": "keyword.control.begin.oql"
         },
         "end": "(\\}",
         "endCaptures": {
           "1": {
-            "name": "punctuation.section.map.end.oql"
+            "name": "keyword.control.end.oql"
           }
         },
-        "patterns": {
-          "include": "$self"
-        }
+        "patterns": [
+          {
+            "include": "#boolean"
+          },
+          {
+            "include": "$string"
+          },
+          {
+            "include": "$self"
+          }
+        ]
       }
     },
     "solver": {
@@ -58,59 +73,47 @@
       "patterns": [
         {
           "include": "#sexp"
-        },
-        {
-          "include": "#string"
         }
       ]
     },
     "sexp": {
-			"begin": "(\\()",
-			"beginCaptures": {
-				"1": {
-					"name": "punctuation.section.expression.begin.oql"
-				}
-			},
-			"end": "(\\))$|(\\)(?=[\\}\\]\\)\\s]*(?:;|$)))|(\\))",
-			"endCaptures": {
-				"1": {
-					"name": "punctuation.section.expression.end.trailing.oql"
-				},
-				"2": {
-					"name": "punctuation.section.expression.end.trailing.oql"
-				},
-				"3": {
-					"name": "punctuation.section.expression.end.oql"
-				}
-			},
+      "begin": "(\\()",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.section.expression.begin.oql"
+        }
+      },
+      "end": "(\\))$|(\\)(?=[\\}\\]\\)\\s]*(?:;|$)))|(\\))",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.section.expression.end.trailing.oql"
+        },
+        "2": {
+          "name": "punctuation.section.expression.end.trailing.oql"
+        },
+        "3": {
+          "name": "punctuation.section.expression.end.oql"
+        }
+      },
       "name": "meta.expression.oql",
       "patterns": [
         {
-          "begin": "(?<=\\()",
-          "beginCaptures": {
-            "1": {
-              "name": "keyword.control.oql"
-            }
-          },
-          "end": "(?=\\))",
-          "name": "meta.definition.global.oql",
-          "patterns": [
-            {
-              "include": "$self"
-            },
-            {
-              "include": "#datastore"
-            }
-          ]
+          "include": "#keyfn"
+        },
+        {
+          "include": "#datastore"
+        },
+        {
+          "include": "#map"
+        },
+        {
+          "include": "#boolean"
         },
         {
           "include": "#string"
         },
         {
           "include": "#self"
-        },
-        {
-          "include": "#datastore"
         }
       ]
     },

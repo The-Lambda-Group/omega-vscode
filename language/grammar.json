@@ -33,7 +33,7 @@
           "include": "#array"
         },
         {
-          "include": "#variable"
+          "include": "#symbol"
         }
       ]
     },
@@ -164,6 +164,10 @@
           "name": "constant.character.escape.oql"
         }
       ]
+    },
+    "symbol": {
+      "match": "(?<=\\()\\w*(?=\\/)\\/(\\w|-|!|_|)+",
+      "name": "meta.symbol.constant.oql"
     },
     "variable": {
       "match": "(?<=\\s|\\()(\\w|-)+(?=\\s|\\))",

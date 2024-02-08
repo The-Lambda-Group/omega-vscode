@@ -21,6 +21,9 @@
       "include": "#variable"
     },
     {
+      "include": "#symbol"
+    },
+    {
       "include": "#map"
     },
     {
@@ -177,6 +180,10 @@
           "name": "constant.character.escape.oql"
         }
       ]
+    },
+    "symbol": {
+      "match":"(?<=\\()\\w*(?=\\/)\\/(\\w|-|!|_|)+",
+      "name": "meta.symbol.constant.oql"
     },
     "variable": {
       "match": "(?<=\\s|\\()(\\w|-)+(?=\\s|\\))",

@@ -1,3 +1,5 @@
+(= DS (datastore-record {"backend" "CouchDB"
+                         "name" "ds.omegadb.io/health-check"}))
 (:- (DS/is-mortal! X)
     (= Q 10)
     (= V "7")

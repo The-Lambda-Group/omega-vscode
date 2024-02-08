@@ -3,6 +3,9 @@
   "scopeName": "source.oql",
   "patterns": [
     {
+      "include": "map"
+    },
+    {
       "include": "#solver"
     },
     {
@@ -16,6 +19,27 @@
     "datastore": {
       "match": "(?<=\\()\\w*(?=\\/)",
       "name": "storage.type.oql"
+    },
+    "boolean": {
+      "match": "(true|false)",
+      "name": "constant.language.boolean.oql"
+    },
+    "map": {
+      "begin": "(\\{)",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.section.map.begin.oql"
+        },
+        "end": "(\\}",
+        "endCaptures": {
+          "1": {
+            "name": "punctuation.section.map.end.oql"
+          }
+        },
+        "patterns": {
+          "include": "$self"
+        }
+      }
     },
     "solver": {
       "begin": "(\\(:-)",
@@ -78,7 +102,6 @@
               "include": "#datastore"
             }
           ]
-
         },
         {
           "include": "#string"

@@ -3,9 +3,6 @@
   "scopeName": "source.oql",
   "patterns": [
     {
-      "include": "#map"
-    },
-    {
       "include": "#solver"
     },
     {
@@ -21,7 +18,10 @@
       "include": "#number"
     },
     {
-      "include": "variable"
+      "include": "#variable"
+    },
+    {
+      "include": "#map"
     }
   ],
   "repository": {
@@ -42,26 +42,26 @@
       "beginCaptures": {
         "1": {
           "name": "punctuation.section.map.begin.oql"
+        }
+      },
+      "end": "(\\})",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.section.map.end.oql"
+        }
+      },
+      "contentName": "map.content.oql",
+      "patterns": [
+        {
+          "include": "#boolean"
         },
-        "end": "(\\})",
-        "endCaptures": {
-          "1": {
-            "name": "punctuation.section.map.end.oql"
-          }
+        {
+          "include": "#string"
         },
-        "contentName": "map.content.oql",
-        "patterns": [
-          {
-            "include": "#boolean"
-          },
-          {
-            "include": "#string"
-          },
-          {
-            "include": "$self"
-          }
-        ]
-      }
+        {
+          "include": "$self"
+        }
+      ]
     },
     "number": {
       "match": "((?<=\\s|\\()\\d+(?=\\s|\\)))|(?<=\\s|\\()(\\d+\\.\\d+(?=\\s|\\)))",

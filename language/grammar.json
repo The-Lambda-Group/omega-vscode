@@ -22,6 +22,9 @@
     },
     {
       "include": "#map"
+    },
+    {
+      "include": "#array"
     }
   ],
   "repository": {
@@ -84,6 +87,26 @@
       "patterns": [
         {
           "include": "#sexp"
+        }
+      ]
+    },
+    "array": {
+      "begin": "(\\[)",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.section.array.begin.oql"
+        }
+      },
+      "end": "(\\])",
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.section.array.end.oql"
+        }
+      },
+      "name": "punctuation.section.array.oql",
+      "patterns": [
+        {
+          "include": "#string"
         }
       ]
     },

@@ -9,7 +9,9 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onCommand:omega.navigateRight"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "languages": [
@@ -48,6 +50,28 @@
         "command": "omega.deleteEntry",
         "title": "Omega: Delete Item",
         "icon": "$(trash)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "omega.navigateRight",
+        "linux": "Alt+right",
+        "key": "Alt+right"
+      },
+      {
+        "command": "omega.navigateLeft",
+        "linux": "Alt+left",
+        "key": "Alt+left"
+      },
+      {
+        "command": "omega.navigateSelectRight",
+        "linux": "Alt+Shift+right",
+        "key": "Alt+Shift+right"
+      },
+      {
+        "command": "omega.navigateSelectLeft",
+        "linux": "Alt+Shift+left",
+        "key": "Alt+Shift+left"
       }
     ],
     "menus": {

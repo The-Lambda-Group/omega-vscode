@@ -93,25 +93,35 @@ function jumpToSpot(select: boolean, forward: boolean) {
   const endOffset = document.offsetAt(selection.end);
   const text = document.getText();
   const currentChar = forward ? text[endOffset] : text[startOffset];
-  if (openChars.includes(currentChar)) {
-    let oppositeChar = charsSet.get(currentChar);
-    let nextIndex = -1;
-    if (oppositeChar === undefined) {
-      nextIndex = findNextWhiteSpace(text, forward ? endOffset : startOffset, forward);
-    } else {
-      nextIndex = findNextBalancedChar(text, currentChar, oppositeChar.toString(), forward ? endOffset : startOffset, forward);
+
+  let oppositeChar = charsSet.get(currentChar);
+  let nextIndex = -1;
+  if (oppositeChar === undefined) {
+    nextIndex = findNextWhiteSpace(text, forward ? endOffset : startOffset, forward);
+  } else {
+    nextIndex = findNextBalancedChar(text, currentChar, oppositeChar.toString(), forward ? endOffset : startOffset, forward);
+  }
+
+  if (nextIndex !== -1) {
+    if (select) {
+      if (forward) {
+        editor.selection = new vscode.Selection(selection.start, document.positionAt(nextIndex + 1));
+      } else {
+        editor.selection = new vscode.Selection(document.positionAt(endOffset + 1), document.positionAt(nextIndex));
+      }
     }
-     
-    if (nextIndex !== -1) {
-      const newPosition = document.positionAt(nextIndex);
-      if (select) {
-        editor.selection = new vscode.Selection(forward ? selection.start : selection.end, document.positionAt(nextIndex + 1));
+    else {
+      let newPosition;
+      if (forward) {
+        newPosition = document.positionAt(nextIndex + 1);
       }
       else {
-        editor.selection = new vscode.Selection(newPosition, newPosition);
+        newPosition = document.positionAt(nextIndex);
       }
+      editor.selection = new vscode.Selection(newPosition, newPosition);
     }
   }
+
 }
 
 export function deactivate() { }

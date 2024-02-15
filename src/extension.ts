@@ -38,6 +38,10 @@ export function activate(context: vscode.ExtensionContext) {
   vscode.commands.registerCommand("omega.navigateSelectLeft", () => {
     jumpToSpot(true, false);
   });
+  context.subscriptions.push(vscode.workspace.onDidChangeTextDocument((event: vscode.TextDocumentChangeEvent) =>
+  {
+    aggressiveIndent();
+  }));
   vscode.commands.registerCommand("omega.aggressiveIndent", () =>
   {
     aggressiveIndent();
@@ -62,7 +66,7 @@ function formatBlock(text: string): string {
       if(newText.length !== 0) {
         newText.push('\n');
       }
-      
+
       for(let j = 0; j < parenthesis_count; j++){
         newText.push('\t');
       }

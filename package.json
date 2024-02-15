@@ -72,6 +72,11 @@
         "command": "omega.navigateSelectLeft",
         "linux": "Alt+Shift+left",
         "key": "Alt+Shift+left"
+      },
+      {
+        "command": "omega.aggressiveIndent",
+        "linux": "Alt+Shift+f",
+        "key": "Alt+Shift+f"
       }
     ],
     "menus": {

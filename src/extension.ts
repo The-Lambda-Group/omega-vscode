@@ -38,6 +38,74 @@ export function activate(context: vscode.ExtensionContext) {
   vscode.commands.registerCommand("omega.navigateSelectLeft", () => {
     jumpToSpot(true, false);
   });
+  vscode.commands.registerCommand("omega.aggressiveIndent", () =>
+  {
+    aggressiveIndent();
+  });
+}
+
+function formatBlock(text: string): string {
+  /* First verify that this is an sexp block */
+  if(text[0] !== '(') {
+    return text;
+  }
+  let newText: string[] = [];
+
+  let parenthesis_count = 0;
+  for(let i = 0; i < text.length; i++) {
+    /* TODO: Add string checking */
+    let char = text[i];
+    if(char === undefined) { 
+      /* This condition should be impossible */
+      return newText.join("");
+    } else if(char === '(') {
+      if(newText.length !== 0) {
+        newText.push('\n');
+      }
+      
+      for(let j = 0; j < parenthesis_count; j++){
+        newText.push('\t');
+      }
+      newText.push('(');
+      parenthesis_count++;
+
+    } else if(char === ')') {
+      parenthesis_count--;
+      /* We can't format if it isn't balanced */
+      if(parenthesis_count < 0) {
+        return text;
+      }
+      newText.push(char);
+    } else if(text[i] === '\n' || text[i] === '\t'){
+      /* Ignore */
+    } else {
+      newText.push(char);
+    }
+  }
+
+  if(parenthesis_count !== 0) {
+    /* We can't format if it isn't balanced */
+    return text;
+  }
+  return newText.join("");
+}
+
+function aggressiveIndent() {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor) {
+    return;
+  }
+  
+  const document = editor.document;
+  const text = document.getText();
+  const startOffset = 0;
+  const endOffset = text.length;
+  let formattedBlock = formatBlock(text);
+  editor.edit(editBuilder => {
+    let startPosition = document.positionAt(startOffset);
+    let endPosition = document.positionAt(endOffset);
+    editBuilder.replace(new vscode.Range(startPosition, endPosition), formattedBlock)
+  });
 }
 
 function findNextWhiteSpace(text: string, startIndex: number, forward: boolean): number {

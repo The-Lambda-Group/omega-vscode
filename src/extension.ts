@@ -40,7 +40,14 @@ export function activate(context: vscode.ExtensionContext) {
   });
   context.subscriptions.push(vscode.workspace.onDidChangeTextDocument((event: vscode.TextDocumentChangeEvent) =>
   {
-    aggressiveIndent();
+    /* Get the overall text range to map over */
+    let range = event.contentChanges.map((reason) => reason.range).reduce((acc, elem) => {
+      let start = acc.start.isBefore(elem.start) ? acc.start : elem.start;
+      let end = acc.end.isAfter(elem.end) ? acc.end : elem.end;
+      return new vscode.Range(start, end);
+    });
+
+    aggressiveIndent(range);
   }));
   vscode.commands.registerCommand("omega.aggressiveIndent", () =>
   {
@@ -48,7 +55,8 @@ export function activate(context: vscode.ExtensionContext) {
   });
 }
 
-function formatBlock(text: string): string {
+/* We want to put in a mapping of every open parenthesis to every close parenthese and the depth, so that we only need to map that chunk. */
+function formatBlock(text: string, start_position: number, initial_depth: number): string {
   /* First verify that this is an sexp block */
   if(text[0] !== '(') {
     return text;
@@ -94,7 +102,7 @@ function formatBlock(text: string): string {
   return newText.join("");
 }
 
-function aggressiveIndent() {
+function aggressiveIndent(range: vscode.Range) {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
     return;
@@ -102,13 +110,14 @@ function aggressiveIndent() {
   
   const document = editor.document;
   const text = document.getText();
-  const startOffset = 0;
-  const endOffset = text.length;
-  let formattedBlock = formatBlock(text);
+  const startOffset = document.offsetAt(range.start);;
+  const endOffset = document.offsetAt(range.end);
+  
+  let formattedBlock = formatBlock(text.substring(startOffset, endOffset), startOffset, 0);
   editor.edit(editBuilder => {
     let startPosition = document.positionAt(startOffset);
     let endPosition = document.positionAt(endOffset);
-    editBuilder.replace(new vscode.Range(startPosition, endPosition), formattedBlock)
+    editBuilder.replace(new vscode.Range(startPosition, endPosition), formattedBlock);
   });
 }
 

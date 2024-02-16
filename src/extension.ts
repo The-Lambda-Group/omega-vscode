@@ -38,8 +38,17 @@ export function activate(context: vscode.ExtensionContext) {
   vscode.commands.registerCommand("omega.navigateSelectLeft", () => {
     jumpToSpot(true, false);
   });
-  context.subscriptions.push(vscode.workspace.onDidChangeTextDocument((event: vscode.TextDocumentChangeEvent) =>
-  {
+  context.subscriptions.push(vscode.workspace.onDidChangeTextDocument((event: vscode.TextDocumentChangeEvent) => {
+    /* Check when we last ran aggressiveIndext */
+    let lastRun = context.workspaceState.get<number>("LastAggressiveIndentTime");
+    if (lastRun === undefined) {
+      lastRun = 0;
+    }
+    let currTime = new Date().getTime();
+    if(currTime - lastRun < 100) {
+      return;
+    }
+    
     /* Get the overall text range to map over */
     let range = event.contentChanges.map((reason) => reason.range).reduce((acc, elem) => {
       let start = acc.start.isBefore(elem.start) ? acc.start : elem.start;
@@ -47,76 +56,78 @@ export function activate(context: vscode.ExtensionContext) {
       return new vscode.Range(start, end);
     });
 
-    aggressiveIndent(range);
+    aggressiveIndent();
+    context.workspaceState.update("LastAggressiveIndentTime", currTime);
   }));
-  vscode.commands.registerCommand("omega.aggressiveIndent", () =>
-  {
+  vscode.commands.registerCommand("omega.aggressiveIndent", () => {
     aggressiveIndent();
   });
 }
 
 /* We want to put in a mapping of every open parenthesis to every close parenthese and the depth, so that we only need to map that chunk. */
-function formatBlock(text: string, start_position: number, initial_depth: number): string {
+function formatBlock(text: string): string {
   /* First verify that this is an sexp block */
-  if(text[0] !== '(') {
+  if (text[0] !== '(') {
     return text;
   }
   let newText: string[] = [];
 
   let parenthesis_count = 0;
-  for(let i = 0; i < text.length; i++) {
+  for (let i = 0; i < text.length; i++) {
     /* TODO: Add string checking */
     let char = text[i];
-    if(char === undefined) { 
+    if (char === undefined) {
       /* This condition should be impossible */
       return newText.join("");
-    } else if(char === '(') {
-      if(newText.length !== 0) {
+    } else if (char === '(') {
+      if (newText.length !== 0) {
         newText.push('\n');
       }
 
-      for(let j = 0; j < parenthesis_count; j++){
+      for (let j = 0; j < parenthesis_count; j++) {
         newText.push('\t');
       }
       newText.push('(');
       parenthesis_count++;
 
-    } else if(char === ')') {
+    } else if (char === ')') {
       parenthesis_count--;
       /* We can't format if it isn't balanced */
-      if(parenthesis_count < 0) {
+      if (parenthesis_count < 0) {
         return text;
       }
       newText.push(char);
-    } else if(text[i] === '\n' || text[i] === '\t'){
+    } else if (text[i] === '\n' || text[i] === '\t') {
       /* Ignore */
     } else {
       newText.push(char);
     }
   }
 
-  if(parenthesis_count !== 0) {
+  if (parenthesis_count !== 0) {
     /* We can't format if it isn't balanced */
     return text;
   }
   return newText.join("");
 }
 
-function aggressiveIndent(range: vscode.Range) {
+function aggressiveIndent() {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
     return;
   }
-  
+
   const document = editor.document;
   const text = document.getText();
-  const startOffset = document.offsetAt(range.start);;
-  const endOffset = document.offsetAt(range.end);
-  
-  let formattedBlock = formatBlock(text.substring(startOffset, endOffset), startOffset, 0);
+  const length = text.length;
+  let startPosition = document.positionAt(0);
+  let endPosition = document.positionAt(text.length);
+
+  // const startOffset = document.offsetAt(range.start);;
+  // const endOffset = document.offsetAt(range.end);
+
+  let formattedBlock = formatBlock(text);
   editor.edit(editBuilder => {
-    let startPosition = document.positionAt(startOffset);
-    let endPosition = document.positionAt(endOffset);
     editBuilder.replace(new vscode.Range(startPosition, endPosition), formattedBlock);
   });
 }
@@ -149,6 +160,44 @@ function findNextBalancedChar(text: string, haveChar: string, oppositeChar: stri
     }
   }
   return -1;
+}
+
+function find_format_range(text: string, startOffset: number, endOffset: number): [number, number] {
+  /* Find first opening parenthesis */
+  let paren_count = 0;
+  let start = -1;
+  let end = -1;
+
+  for (let i = startOffset; i >= 0; i--) {
+    let char = text[i];
+    if (char === '(') {
+      if (paren_count === 0) {
+        start = i;
+        break;
+      }
+      paren_count--;
+    }
+    else if (char === ')') {
+      paren_count++;
+    }
+  }
+
+  for (let i = endOffset; i < text.length; i++) {
+    let char = text[i];
+    if (char === '(') {
+      if (paren_count === 0) {
+        start = i;
+        break;
+      }
+      paren_count--;
+    }
+    else if (char === ')') {
+      paren_count++;
+    }
+  }
+
+
+  return [0,0];
 }
 
 function jumpToSpot(select: boolean, forward: boolean) {

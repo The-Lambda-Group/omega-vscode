@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { OmegaDocumentProvider } from "./docs";
 import { DBNodeTreeItem, OmegaTreeViewProvider } from "./tree_node";
 import { open } from "fs";
+import { DatastoreNode } from "./tree_node/data_type/datastore";
 
 export function activate(context: vscode.ExtensionContext) {
   console.log("activating Omega extension.");
@@ -10,6 +11,10 @@ export function activate(context: vscode.ExtensionContext) {
     "omegaDocuments",
     documentProvider
   );
+  const DBNode = new DatastoreNode({
+    dsName: "ds.omegadb.io/registry",
+    host: "http://localhost:5984",
+  });
   const nodeDependenciesProvider = new OmegaTreeViewProvider({
     documentProvider,
   });
@@ -17,7 +22,11 @@ export function activate(context: vscode.ExtensionContext) {
     "omegaDatastores",
     nodeDependenciesProvider
   );
+  // DBNode.fetchChildren();
   vscode.commands.registerCommand("omega.fetchDatastore", () => {
+    DBNode.fetchChildren().then(
+      /* Finished Getting Children */
+    );
     vscode.window.showInformationMessage("NOT_IMPLEMENTED");
   });
   vscode.commands.registerCommand(
@@ -45,10 +54,10 @@ export function activate(context: vscode.ExtensionContext) {
       lastRun = 0;
     }
     let currTime = new Date().getTime();
-    if(currTime - lastRun < 100) {
+    if (currTime - lastRun < 100) {
       return;
     }
-    
+
     /* Get the overall text range to map over */
     let range = event.contentChanges.map((reason) => reason.range).reduce((acc, elem) => {
       let start = acc.start.isBefore(elem.start) ? acc.start : elem.start;
@@ -73,10 +82,22 @@ function formatBlock(text: string): string {
   let newText: string[] = [];
 
   let parenthesis_count = 0;
+  let is_string = false;
   for (let i = 0; i < text.length; i++) {
     /* TODO: Add string checking */
     let char = text[i];
-    if (char === undefined) {
+
+    if (text[i] === "\"") {
+      if (i >= 1 && text[i - 1] === "\\") {
+        /* Ignore */
+      } else {
+        is_string = !is_string;
+      }
+      newText.push(char);
+    } else if (is_string) {
+      newText.push(char);
+    }
+    else if (char === undefined) {
       /* This condition should be impossible */
       return newText.join("");
     } else if (char === '(') {
@@ -99,7 +120,8 @@ function formatBlock(text: string): string {
       newText.push(char);
     } else if (text[i] === '\n' || text[i] === '\t') {
       /* Ignore */
-    } else {
+    }
+    else {
       newText.push(char);
     }
   }
@@ -197,7 +219,7 @@ function find_format_range(text: string, startOffset: number, endOffset: number)
   }
 
 
-  return [0,0];
+  return [0, 0];
 }
 
 function jumpToSpot(select: boolean, forward: boolean) {

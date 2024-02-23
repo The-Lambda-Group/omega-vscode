@@ -97,6 +97,44 @@ function isWordOverChar(char: string): boolean {
   return isWordChar(char) || isWhiteSpaceChar(char);
 }
 
+function getPairOpposite(char: string): string {
+  let charsSet: Map<String, String> = new Map<string, string>([['[', ']'], ["(", ")"], ["{", "}"], [']', '['], [")", "("], ["}", "{"]]);
+  let other = charsSet.get(char)?.toString() ?? " ";
+  return other;
+}
+
+
+
+function findNextWordChar(text: string, rangeEndChar: string, initialOffset: number): number {
+  let offset = initialOffset;
+  while(offset < text.length) {
+    offset++;
+    if (text[offset] === rangeEndChar) {
+      return offset;
+    }
+  }
+  /* We are unbalanced! */
+  return -1;
+}
+
+function findPrevWordChar(text: string, initialOffset: number): [string, number] {
+  let offset = initialOffset;
+  while(offset > 0) {
+    offset--;
+    if (isWordChar(text[offset])) {
+      return [text[offset], offset];
+    }
+  }
+  /* We are unbalanced! */
+  return [" ", -1];
+}
+
+function getFormatRange(text: string, startOffset: number, endOffset: number): [number, number] {
+  const [rangeStartChar, rangeStartOffset] = findPrevWordChar(text, startOffset);
+  let rangeEndOffset = findNextWordChar(text, getPairOpposite(rangeStartChar), startOffset);
+  return [rangeStartOffset, rangeEndOffset];
+}
+
 function findPreviousWordStart(text: string, initialOffset: number): number {
   let currentOffset = initialOffset;
   if (initialOffset > text.length) {
@@ -110,8 +148,8 @@ function findPreviousWordStart(text: string, initialOffset: number): number {
   while (currentOffset >= 1) {
     currentOffset--;
     if (isWordChar(text[currentOffset])) {
-      return currentOffset;
-    } else if (isWhiteSpaceChar(text[currentOffset]) || isWordChar(text[currentOffset])) {
+      return currentOffset + 1;
+    } else if (isWhiteSpaceChar(text[currentOffset])) {
       if (newWordStarted) { return currentOffset; }
       whitespaceTouched = true;
       continue;
@@ -132,14 +170,14 @@ function formatRange(
   const cursorPosition = editor.selection.active;
   const startIndex = document.offsetAt(range.start);
   const oldText = document?.getText(range);
-  if (newText === "\n") {
+  if (newText.includes("\n")) {
     /* Oops! We need to find the previous words start position */
     /* Algorithm: Find all whitespace before and then the next word */
     let oldLine = document.lineAt(range.start.line).text;
     let prevWordStart = findPreviousWordStart(oldLine, range.start.character);
     /* Prepend that whitespace to the new line */
-    let leadingWhitespace = new Array(prevWordStart).fill(undefined).map(() => ' ').join(' ');
-    newText = newText.concat(leadingWhitespace);
+    let leadingWhitespace = " ".repeat(prevWordStart);
+    // newText = newText.concat(leadingWhitespace);
     editor.edit(editBuilder => {
       let pos = document.positionAt(startIndex + 1);
       editBuilder.insert(pos, leadingWhitespace);

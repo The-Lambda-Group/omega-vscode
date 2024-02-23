@@ -22,7 +22,6 @@ export function activate(context: vscode.ExtensionContext) {
     "omegaDatastores",
     nodeDependenciesProvider
   );
-  // DBNode.fetchChildren();
   vscode.commands.registerCommand("omega.fetchDatastore", () => {
     DBNode.fetchChildren().then(
       /* Finished Getting Children */
@@ -58,20 +57,100 @@ export function activate(context: vscode.ExtensionContext) {
       return;
     }
 
-    /* Get the overall text range to map over */
-    let range = event.contentChanges.map((reason) => reason.range).reduce((acc, elem) => {
-      let start = acc.start.isBefore(elem.start) ? acc.start : elem.start;
-      let end = acc.end.isAfter(elem.end) ? acc.end : elem.end;
-      return new vscode.Range(start, end);
+    // /* Get the overall text range to map over */
+    // let range = event.contentChanges.map((reason) => reason.range).reduce((acc, elem) => {
+    //   let start = acc.start.isBefore(elem.start) ? acc.start : elem.start;
+    //   let end = acc.end.isAfter(elem.end) ? acc.end : elem.end;
+    //   return new vscode.Range(start, end);
+    // });
+
+    /* Format */
+    let x = event.contentChanges.map((reason) => {
+      let range = reason.range;
+      let newText = reason.text;
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        return;
+      }
+      const document = editor.document;
+      formatRange(editor, document, range, newText);
+      context.workspaceState.update("LastAggressiveIndentTime", currTime);
     });
 
-    aggressiveIndent();
-    context.workspaceState.update("LastAggressiveIndentTime", currTime);
   }));
   vscode.commands.registerCommand("omega.aggressiveIndent", () => {
-    aggressiveIndent();
+    // aggressiveIndent();
   });
 }
+
+function isWordChar(char: string): boolean {
+  let wordChars = ['(', ')', '{', '}', '[', ']'];
+  return wordChars.includes(char);
+}
+
+function isWhiteSpaceChar(char: string): boolean {
+  let whitespaceChars = [' ', '\t', '\n'];
+  return whitespaceChars.includes(char);
+}
+
+function isWordOverChar(char: string): boolean {
+  return isWordChar(char) || isWhiteSpaceChar(char);
+}
+
+function findPreviousWordStart(text: string, initialOffset: number): number {
+  let currentOffset = initialOffset;
+  if (initialOffset > text.length) {
+    return 0;
+  } else if (initialOffset === 0) {
+    return 0;
+  }
+  /* Moving full word down a line */
+  let newWordStarted = false;
+  let whitespaceTouched = false;
+  while (currentOffset >= 1) {
+    currentOffset--;
+    if (isWordChar(text[currentOffset])) {
+      return currentOffset;
+    } else if (isWhiteSpaceChar(text[currentOffset]) || isWordChar(text[currentOffset])) {
+      if (newWordStarted) { return currentOffset; }
+      whitespaceTouched = true;
+      continue;
+    } else if (whitespaceTouched && newWordStarted === false) {
+      newWordStarted = true;
+    }
+  }
+  return 0;
+}
+
+function formatRange(
+  editor: vscode.TextEditor,
+  document: vscode.TextDocument,
+  range: vscode.Range,
+  newText: string
+) {
+  const originalDocument = document;
+  const cursorPosition = editor.selection.active;
+  const startIndex = document.offsetAt(range.start);
+  const oldText = document?.getText(range);
+  if (newText === "\n") {
+    /* Oops! We need to find the previous words start position */
+    /* Algorithm: Find all whitespace before and then the next word */
+    let oldLine = document.lineAt(range.start.line).text;
+    let prevWordStart = findPreviousWordStart(oldLine, range.start.character);
+    /* Prepend that whitespace to the new line */
+    let leadingWhitespace = new Array(prevWordStart).fill(undefined).map(() => ' ').join(' ');
+    newText = newText.concat(leadingWhitespace);
+    editor.edit(editBuilder => {
+      let pos = document.positionAt(startIndex + 1);
+      editBuilder.insert(pos, leadingWhitespace);
+    });
+  }
+  // if(true) { /* TODO: This needs to check if in a string */
+  //   const originalText: string = document.getText(range) ?? "";
+  //   const leadingWhitespace = (originalText.match(/^\s*/) ?? "")[0];
+  //   const index = 
+  // }
+};
 
 /* We want to put in a mapping of every open parenthesis to every close parenthese and the depth, so that we only need to map that chunk. */
 function formatBlock(text: string): string {
@@ -133,7 +212,7 @@ function formatBlock(text: string): string {
   return newText.join("");
 }
 
-function aggressiveIndent() {
+function aggressiveIndent(range: vscode.Range) {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
     return;

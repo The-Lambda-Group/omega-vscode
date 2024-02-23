@@ -47,15 +47,15 @@ export function activate(context: vscode.ExtensionContext) {
     jumpToSpot(true, false);
   });
   context.subscriptions.push(vscode.workspace.onDidChangeTextDocument((event: vscode.TextDocumentChangeEvent) => {
-    /* Check when we last ran aggressiveIndext */
-    let lastRun = context.workspaceState.get<number>("LastAggressiveIndentTime");
-    if (lastRun === undefined) {
-      lastRun = 0;
-    }
-    let currTime = new Date().getTime();
-    if (currTime - lastRun < 100) {
-      return;
-    }
+    // /* Check when we last ran aggressiveIndext */
+    // let lastRun = context.workspaceState.get<number>("LastAggressiveIndentTime");
+    // if (lastRun === undefined) {
+    //   lastRun = 0;
+    // }
+    // let currTime = new Date().getTime();
+    // if (currTime - lastRun < 100) {
+    //   return;
+    // }
 
     // /* Get the overall text range to map over */
     // let range = event.contentChanges.map((reason) => reason.range).reduce((acc, elem) => {
@@ -65,6 +65,7 @@ export function activate(context: vscode.ExtensionContext) {
     // });
 
     /* Format */
+    let n = event.contentChanges.length;
     let x = event.contentChanges.map((reason) => {
       let range = reason.range;
       let newText = reason.text;
@@ -74,7 +75,7 @@ export function activate(context: vscode.ExtensionContext) {
       }
       const document = editor.document;
       formatRange(editor, document, range, newText);
-      context.workspaceState.update("LastAggressiveIndentTime", currTime);
+      // context.workspaceState.update("LastAggressiveIndentTime", currTime);
     });
 
   }));
@@ -142,7 +143,8 @@ function findPreviousWordStart(text: string, initialOffset: number): number {
   } else if (initialOffset === 0) {
     return 0;
   }
-  /* Moving full word down a line */
+
+  /* Why are we sometimes double hitting */
   let newWordStarted = false;
   let whitespaceTouched = false;
   while (currentOffset >= 1) {
@@ -171,26 +173,19 @@ function formatRange(
   const startIndex = document.offsetAt(range.start);
   const oldText = document?.getText(range);
   if (newText.includes("\n")) {
-    /* Oops! We need to find the previous words start position */
-    /* Algorithm: Find all whitespace before and then the next word */
     let oldLine = document.lineAt(range.start.line).text;
     let prevWordStart = findPreviousWordStart(oldLine, range.start.character);
-    /* Prepend that whitespace to the new line */
     let leadingWhitespace = " ".repeat(prevWordStart);
-    // newText = newText.concat(leadingWhitespace);
+
+    /* TODO: Calculat the amount of whitespace after the new line */
+
     editor.edit(editBuilder => {
       let pos = document.positionAt(startIndex + 1);
       editBuilder.insert(pos, leadingWhitespace);
     });
   }
-  // if(true) { /* TODO: This needs to check if in a string */
-  //   const originalText: string = document.getText(range) ?? "";
-  //   const leadingWhitespace = (originalText.match(/^\s*/) ?? "")[0];
-  //   const index = 
-  // }
 };
 
-/* We want to put in a mapping of every open parenthesis to every close parenthese and the depth, so that we only need to map that chunk. */
 function formatBlock(text: string): string {
   /* First verify that this is an sexp block */
   if (text[0] !== '(') {

@@ -84,8 +84,12 @@ export function activate(context: vscode.ExtensionContext) {
   });
 }
 
+function getWordChars(): string[] {
+  return ['(', ')', '{', '}', '[', ']'];
+}
+
 function isWordChar(char: string): boolean {
-  let wordChars = ['(', ')', '{', '}', '[', ']'];
+  let wordChars = getWordChars();
   return wordChars.includes(char);
 }
 
@@ -104,6 +108,11 @@ function isBlockEndChar(char: string): boolean {
   return wordChars.includes(char);
 }
 
+function isBlockOpenChar(char: string): boolean {
+  let wordChars = ['(', '(', '{'];
+  return wordChars.includes(char);
+}
+
 function isWordOverChar(char: string): boolean {
   return isWordChar(char) || isWhiteSpaceChar(char);
 }
@@ -114,7 +123,24 @@ function getPairOpposite(char: string): string {
   return other;
 }
 
-
+function findBlockOpener(text: string, initialOffset: number): number {
+  let counts = new Map<string, number>(getWordChars().map(elem => [elem, 0]));
+  for(let i = initialOffset; i >= 0; i--) {
+    if(isBlockOpenChar(text[i])) {
+      let getPairOppositeCount = counts.get(getPairOpposite(text[i]));
+      let openCharCount = counts.get(text[i]) ?? 0;
+      if(getPairOppositeCount === 0 && openCharCount === 0) {
+        return i;
+      }
+      counts.set(text[i], openCharCount + 1);
+    } else if (isBlockEndChar(text[i])) {
+      let currCount = counts.get(text[i]) ?? 0;
+      counts.set(text[i], currCount + 1);
+    }
+  }
+  /* No block opener exists */
+  return -1;
+}
 
 function findNextWordChar(text: string, rangeEndChar: string, initialOffset: number): number {
   let offset = initialOffset;
@@ -200,63 +226,14 @@ function formatRange(
   }
 };
 
-function formatBlock(text: string): string {
-  /* First verify that this is an sexp block */
-  if (text[0] !== '(') {
-    return text;
+function getSurroundingBlock(text: string, offset: number): [number, number] {
+  /* If we go forwards, we can find the pair easiest (fuck! that's not true) */
+  let openOffset = findBlockOpener(text, offset);
+  if(openOffset === -1) {
+    return [-1, -1];
   }
-  let newText: string[] = [];
-
-  let parenthesis_count = 0;
-  let is_string = false;
-  for (let i = 0; i < text.length; i++) {
-    /* TODO: Add string checking */
-    let char = text[i];
-
-    if (text[i] === "\"") {
-      if (i >= 1 && text[i - 1] === "\\") {
-        /* Ignore */
-      } else {
-        is_string = !is_string;
-      }
-      newText.push(char);
-    } else if (is_string) {
-      newText.push(char);
-    }
-    else if (char === undefined) {
-      /* This condition should be impossible */
-      return newText.join("");
-    } else if (char === '(') {
-      if (newText.length !== 0) {
-        newText.push('\n');
-      }
-
-      for (let j = 0; j < parenthesis_count; j++) {
-        newText.push('\t');
-      }
-      newText.push('(');
-      parenthesis_count++;
-
-    } else if (char === ')') {
-      parenthesis_count--;
-      /* We can't format if it isn't balanced */
-      if (parenthesis_count < 0) {
-        return text;
-      }
-      newText.push(char);
-    } else if (text[i] === '\n' || text[i] === '\t') {
-      /* Ignore */
-    }
-    else {
-      newText.push(char);
-    }
-  }
-
-  if (parenthesis_count !== 0) {
-    /* We can't format if it isn't balanced */
-    return text;
-  }
-  return newText.join("");
+  let closeOffset = findNextBalancedChar(text, text[openOffset], getPairOpposite(text[openOffset]), offset, true);
+  return [openOffset, closeOffset];
 }
 
 function aggressiveIndent(range: vscode.Range) {

@@ -168,20 +168,19 @@ function formatRange(
   range: vscode.Range,
   newText: string
 ) {
-  const originalDocument = document;
-  const cursorPosition = editor.selection.active;
   const startIndex = document.offsetAt(range.start);
-  const oldText = document?.getText(range);
   if (newText.includes("\n")) {
+    /* Delete everything after the \n */
     let oldLine = document.lineAt(range.start.line).text;
     let prevWordStart = findPreviousWordStart(oldLine, range.start.character);
     let leadingWhitespace = " ".repeat(prevWordStart);
 
-    /* TODO: Calculat the amount of whitespace after the new line */
-
     editor.edit(editBuilder => {
       let pos = document.positionAt(startIndex + 1);
-      editBuilder.insert(pos, leadingWhitespace);
+      let line = document.lineAt(pos.line);
+      let lineText = line.text;
+      let newNewLine = leadingWhitespace.concat(lineText.trimStart().trimEnd());
+      editBuilder.replace(line.range, newNewLine);
     });
   }
 };

@@ -94,6 +94,11 @@ function isWhiteSpaceChar(char: string): boolean {
   return whitespaceChars.includes(char);
 }
 
+function isBlockEndChar(char: string): boolean {
+  let wordChars = [')', '}', ']'];
+  return wordChars.includes(char);
+}
+
 function isWordOverChar(char: string): boolean {
   return isWordChar(char) || isWhiteSpaceChar(char);
 }
@@ -150,9 +155,13 @@ function findPreviousWordStart(text: string, initialOffset: number): number {
   while (currentOffset >= 1) {
     currentOffset--;
     if (isWordChar(text[currentOffset])) {
+      if(isBlockEndChar(text[currentOffset])) {
+        /* Find start of block */
+        return findNextBalancedChar(text, text[currentOffset], getPairOpposite(text[currentOffset]), currentOffset, false);
+      }
       return currentOffset + 1;
     } else if (isWhiteSpaceChar(text[currentOffset])) {
-      if (newWordStarted) { return currentOffset; }
+      if (newWordStarted) { return currentOffset + 1; }
       whitespaceTouched = true;
       continue;
     } else if (whitespaceTouched && newWordStarted === false) {

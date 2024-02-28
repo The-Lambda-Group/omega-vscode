@@ -94,6 +94,11 @@ function isWhiteSpaceChar(char: string): boolean {
   return whitespaceChars.includes(char);
 }
 
+function isPunctuationChar(char: string): boolean {
+  let punctuationChars = [',', ':'];
+  return punctuationChars.includes(char);
+}
+
 function isBlockEndChar(char: string): boolean {
   let wordChars = [')', '}', ']'];
   return wordChars.includes(char);
@@ -113,7 +118,7 @@ function getPairOpposite(char: string): string {
 
 function findNextWordChar(text: string, rangeEndChar: string, initialOffset: number): number {
   let offset = initialOffset;
-  while(offset < text.length) {
+  while (offset < text.length) {
     offset++;
     if (text[offset] === rangeEndChar) {
       return offset;
@@ -125,7 +130,7 @@ function findNextWordChar(text: string, rangeEndChar: string, initialOffset: num
 
 function findPrevWordChar(text: string, initialOffset: number): [string, number] {
   let offset = initialOffset;
-  while(offset > 0) {
+  while (offset > 0) {
     offset--;
     if (isWordChar(text[offset])) {
       return [text[offset], offset];
@@ -155,12 +160,12 @@ function findPreviousWordStart(text: string, initialOffset: number): number {
   while (currentOffset >= 1) {
     currentOffset--;
     if (isWordChar(text[currentOffset])) {
-      if(isBlockEndChar(text[currentOffset])) {
+      if (isBlockEndChar(text[currentOffset])) {
         /* Find start of block */
         return findNextBalancedChar(text, text[currentOffset], getPairOpposite(text[currentOffset]), currentOffset, false);
       }
       return currentOffset + 1;
-    } else if (isWhiteSpaceChar(text[currentOffset])) {
+    } else if (isWhiteSpaceChar(text[currentOffset]) || isPunctuationChar(text[currentOffset])) {
       if (newWordStarted) { return currentOffset + 1; }
       whitespaceTouched = true;
       continue;

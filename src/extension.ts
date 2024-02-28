@@ -125,11 +125,11 @@ function getPairOpposite(char: string): string {
 
 function findBlockOpener(text: string, initialOffset: number): number {
   let counts = new Map<string, number>(getWordChars().map(elem => [elem, 0]));
-  for(let i = initialOffset; i >= 0; i--) {
-    if(isBlockOpenChar(text[i])) {
+  for (let i = initialOffset; i >= 0; i--) {
+    if (isBlockOpenChar(text[i])) {
       let getPairOppositeCount = counts.get(getPairOpposite(text[i]));
       let openCharCount = counts.get(text[i]) ?? 0;
-      if(getPairOppositeCount === 0 && openCharCount === 0) {
+      if (getPairOppositeCount === 0 && openCharCount === 0) {
         return i;
       }
       counts.set(text[i], openCharCount + 1);
@@ -226,14 +226,36 @@ function formatRange(
   }
 };
 
+function balanceLines(editor: vscode.TextEditor, 
+                      line1: vscode.TextLine, 
+                      line2: vscode.TextLine): Thenable<boolean>  {
+  let lineOneWhiteSpaceCount = 0;
+  let line1Text = line1.text;
+  let leadingWhiteSpace = line1Text.length - line1Text.trimStart().length;
+  return editor.edit(editBuilder => {
+    let newLine2 = " ".repeat(leadingWhiteSpace).concat(line2.text.trimStart().trimEnd());
+    editBuilder.replace(line2.range, newLine2);
+  });
+}
+
 function getSurroundingBlock(text: string, offset: number): [number, number] {
   /* If we go forwards, we can find the pair easiest (fuck! that's not true) */
   let openOffset = findBlockOpener(text, offset);
-  if(openOffset === -1) {
+  if (openOffset === -1) {
     return [-1, -1];
   }
   let closeOffset = findNextBalancedChar(text, text[openOffset], getPairOpposite(text[openOffset]), offset, true);
   return [openOffset, closeOffset];
+}
+
+async function format_block(editor: vscode.TextEditor, document: vscode.TextDocument, range: vscode.Range) {
+  let currLine = document.lineAt(range.start.line);
+  let endLine = document.lineAt(range.end.line);
+  while(currLine < endLine) {
+    let nextLine = document.lineAt(currLine.lineNumber + 1);
+    await balanceLines(editor, currLine, nextLine);
+    currLine = nextLine;
+  }
 }
 
 function aggressiveIndent(range: vscode.Range) {
@@ -251,10 +273,10 @@ function aggressiveIndent(range: vscode.Range) {
   // const startOffset = document.offsetAt(range.start);;
   // const endOffset = document.offsetAt(range.end);
 
-  let formattedBlock = formatBlock(text);
-  editor.edit(editBuilder => {
-    editBuilder.replace(new vscode.Range(startPosition, endPosition), formattedBlock);
-  });
+  // let formattedBlock = formatBlock(text);
+  // editor.edit(editBuilder => {
+  //   editBuilder.replace(new vscode.Range(startPosition, endPosition), formattedBlock);
+  // });
 }
 
 function findNextWhiteSpace(text: string, startIndex: number, forward: boolean): number {

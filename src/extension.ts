@@ -173,7 +173,8 @@ function formatRange(
     /* Delete everything after the \n */
     let oldLine = document.lineAt(range.start.line).text;
     let prevWordStart = findPreviousWordStart(oldLine, range.start.character);
-    let leadingWhitespace = " ".repeat(prevWordStart);
+    let leadingTabCount = oldLine.substring(0, prevWordStart).match("/\t/g")?.length ?? 0;
+    let leadingWhitespace = "\t".repeat(leadingTabCount).concat(" ".repeat(prevWordStart - leadingTabCount));
 
     editor.edit(editBuilder => {
       let pos = document.positionAt(startIndex + 1);

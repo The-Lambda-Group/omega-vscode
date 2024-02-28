@@ -80,7 +80,11 @@ export function activate(context: vscode.ExtensionContext) {
 
   }));
   vscode.commands.registerCommand("omega.aggressiveIndent", () => {
-    // aggressiveIndent();
+    const editor = vscode.window.activeTextEditor;
+    if(!editor) {
+      return;
+    }
+    format_surrounding_region(editor);
   });
 }
 
@@ -127,12 +131,11 @@ function findBlockOpener(text: string, initialOffset: number): number {
   let counts = new Map<string, number>(getWordChars().map(elem => [elem, 0]));
   for (let i = initialOffset; i >= 0; i--) {
     if (isBlockOpenChar(text[i])) {
-      let getPairOppositeCount = counts.get(getPairOpposite(text[i]));
-      let openCharCount = counts.get(text[i]) ?? 0;
-      if (getPairOppositeCount === 0 && openCharCount === 0) {
+      let pairOppositeCount = counts.get(getPairOpposite(text[i])) ?? 0;
+      if (pairOppositeCount === 0) {
         return i;
       }
-      counts.set(text[i], openCharCount + 1);
+      counts.set(getPairOpposite(text[i]), pairOppositeCount - 1);
     } else if (isBlockEndChar(text[i])) {
       let currCount = counts.get(text[i]) ?? 0;
       counts.set(text[i], currCount + 1);
@@ -256,6 +259,13 @@ async function format_block(editor: vscode.TextEditor, document: vscode.TextDocu
     await balanceLines(editor, currLine, nextLine);
     currLine = nextLine;
   }
+}
+
+async function format_surrounding_region(editor: vscode.TextEditor) {
+  let document = editor.document;
+  let startPos = document.offsetAt(editor.selection.active);
+  let [start, end] = getSurroundingBlock(document.getText(), startPos);
+  await format_block(editor, document, new vscode.Range(document.positionAt(start), document.positionAt(end)));
 }
 
 function aggressiveIndent(range: vscode.Range) {

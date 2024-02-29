@@ -1,9 +1,5 @@
-(:-         
-	(DS/is-mortal! X)        
-	(= Q 10.6 10.1 [1, 2, 3])     
-	(= V 
-	"7")    
-	
-	(DS/is-man X))
-(= DS 
-	(datastore-record {"backend": "CouchDB", "name" "ds.omegadb.io/health-check"}))
+(= Q 7 (a b c)
+    {x [1,
+        2,
+        3] 
+        z})

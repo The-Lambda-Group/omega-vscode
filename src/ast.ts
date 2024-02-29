@@ -57,6 +57,13 @@ export class Node {
         this.linePos = linePos;
     }
 
+    findNode(line: number, linePos: number): Node[] {
+        if (this.line === line && this.linePos === linePos) {
+            return [this];
+        }
+        return this.children.map(child => child.findNode(line, linePos)).flat();
+    }
+
     formatChildren(startDepth: number): string {
         let increment = 3;
         let text = "";
@@ -98,7 +105,21 @@ export class Node {
     }
 }
 
-
+export function get_selected_node(parentNode: Node, line: number, position: number, text: string): Node {
+    let currLocation = position;
+    let wordCount = 0;
+    while(currLocation > 0) {
+        currLocation = findPreviousWordStart(text, currLocation) - 1;
+        if (currLocation !== -2) {
+            wordCount++;
+        }
+    }
+    let nodes = parentNode.findNode(line, wordCount);
+    if (nodes.length === 0) {
+        return new Node(TokenType.Start, "error", line, wordCount);
+    } 
+    return nodes[0];
+}
 
 function format_line(nodes: Node[], prevLine: string) {
     let parentNode = new Node(TokenType.Start, "start", 0, 0);

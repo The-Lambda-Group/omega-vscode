@@ -49,13 +49,17 @@ export class Node {
         this.text = text;
         this.children = [];
     }
+
+    /* Close doesn't look right */
+    print(): string {
+        return this.text + this.children.map(child => child.print()).join(" ");
+    }
 }
 
 function parseToken(token: string): Node {
-    if(isBlockChar(token)) {
-        if(isBlockOpenChar(token)) {
-            return new Node(TokenType.Open, token);
-        }
+    if(isBlockOpenChar(token)) {
+        return new Node(TokenType.Open, token);
+    } else if (isBlockEndChar(token)) {
         return new Node(TokenType.Close, token);
     } else if (isWhiteSpaceChar(token)) {
         return new Node(TokenType.Whitespace, token);
@@ -67,7 +71,7 @@ function parseToken(token: string): Node {
 function tokenize(text: string): string[] {
     return text.replace(/\(/g, ' ( ').replace(/\)/g, ' ) ').
                 replace(/\{/g, ' { ').replace(/\}/g, ' } ').
-                replace(/\[/g, ' [ ').replace(/\]/g, ' ] ').trim().split(/\s+/);
+                replace(/\[/g, ' [ ').replace(/\]/g, ' ] ').trim().split(/[\t|' ']+/);
 }
 
 export function parseText(text: string): Node {
@@ -75,6 +79,7 @@ export function parseText(text: string): Node {
     let _ = 0;
     let tokens = tokenize(text);
     [parentNode.children, _] = parse(parentNode, tokens, 0);
+    let s = parentNode.print();
     return parentNode;
 }
 

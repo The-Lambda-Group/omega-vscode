@@ -58,12 +58,19 @@ export class Node {
             let currChild = this.children[i];
             switch (currChild.type) {
                 case TokenType.Open:
+                    if(i !== 0) {
+                        text += " ";
+                    }
                     text += currChild.text + currChild.formatChildren(startDepth + increment);
                     break;
                 case TokenType.Close:
                     text += currChild.text;
                     break;
                 case TokenType.Fact:
+                    if(i === 0) {
+                        text += currChild.text;
+                        break;
+                    }
                     text += " " + currChild.text;
                     break;
                 case TokenType.Newline:
@@ -74,11 +81,6 @@ export class Node {
             }
         }
         return text;
-    }
-
-    /* Close doesn't look right */
-    print(): string {
-        return this.text + this.children.map(child => child.print()).join(" ");
     }
 }
 

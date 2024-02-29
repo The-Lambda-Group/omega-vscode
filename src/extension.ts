@@ -91,6 +91,11 @@ export function activate(context: vscode.ExtensionContext) {
       /* Error */
       return;
     }
+    editor.edit(editBuilder => {
+      let document = editor.document;
+      let range = new vscode.Range(document.positionAt(0), document.positionAt(document.getText().length));
+      editBuilder.replace(range, ast.formatChildren(0));
+    });
   });
 }
 

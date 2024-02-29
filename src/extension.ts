@@ -3,6 +3,7 @@ import { OmegaDocumentProvider } from "./docs";
 import { DBNodeTreeItem, OmegaTreeViewProvider } from "./tree_node";
 import { open } from "fs";
 import { DatastoreNode } from "./tree_node/data_type/datastore";
+import { TokenType, parse, parseText } from "./ast";
 
 export function activate(context: vscode.ExtensionContext) {
   console.log("activating Omega extension.");
@@ -84,7 +85,12 @@ export function activate(context: vscode.ExtensionContext) {
     if(!editor) {
       return;
     }
-    format_surrounding_region(editor);
+    // format_surrounding_region(editor);
+    let ast = parseText(editor.document.getText());
+    if (ast.type != TokenType.Start) {
+      /* Error */
+      return;
+    }
   });
 }
 
@@ -113,7 +119,7 @@ function isBlockEndChar(char: string): boolean {
 }
 
 function isBlockOpenChar(char: string): boolean {
-  let wordChars = ['(', '(', '{'];
+  let wordChars = ['(', '[', '{'];
   return wordChars.includes(char);
 }
 
@@ -229,16 +235,16 @@ function formatRange(
   }
 };
 
-function balanceLines(editor: vscode.TextEditor, 
-                      line1: vscode.TextLine, 
-                      line2: vscode.TextLine): Thenable<boolean>  {
-  let lineOneWhiteSpaceCount = 0;
-  let line1Text = line1.text;
-  let leadingWhiteSpace = line1Text.length - line1Text.trimStart().length;
-  return editor.edit(editBuilder => {
-    let newLine2 = " ".repeat(leadingWhiteSpace).concat(line2.text.trimStart().trimEnd());
+async function balanceLines(editor: vscode.TextEditor, 
+                      line1: string, 
+                      line2: vscode.TextLine): Promise<string>  {
+  let leadingWhiteSpace = line1.length - line1.trimStart().length;
+  let leadingTabCount =  line1.substring(0, leadingWhiteSpace).match("/\t/g")?.length ?? 0;
+  let newLine2 = "\t".repeat(leadingTabCount).concat(" ".repeat(leadingWhiteSpace - leadingTabCount).concat(line2.text.trimStart().trimEnd()));
+  await editor.edit(editBuilder => {
     editBuilder.replace(line2.range, newLine2);
   });
+  return newLine2;
 }
 
 function getSurroundingBlock(text: string, offset: number): [number, number] {
@@ -252,12 +258,12 @@ function getSurroundingBlock(text: string, offset: number): [number, number] {
 }
 
 async function format_block(editor: vscode.TextEditor, document: vscode.TextDocument, range: vscode.Range) {
-  let currLine = document.lineAt(range.start.line);
+  let currLine = document.lineAt(range.start.line).text;
   let endLine = document.lineAt(range.end.line);
-  while(currLine < endLine) {
-    let nextLine = document.lineAt(currLine.lineNumber + 1);
-    await balanceLines(editor, currLine, nextLine);
-    currLine = nextLine;
+
+  for(let i = range.start.line; i < endLine.lineNumber; i++) {
+    let nextLine = document.lineAt(i + 1);
+    currLine = await balanceLines(editor, currLine, nextLine);
   }
 }
 

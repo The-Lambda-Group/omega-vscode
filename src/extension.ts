@@ -3,7 +3,7 @@ import { OmegaDocumentProvider } from "./docs";
 import { DBNodeTreeItem, OmegaTreeViewProvider } from "./tree_node";
 import { open } from "fs";
 import { DatastoreNode } from "./tree_node/data_type/datastore";
-import { TokenType, parse, parseText } from "./ast";
+import { TokenType, format_doc, parse, parseText } from "./ast";
 
 export function activate(context: vscode.ExtensionContext) {
   console.log("activating Omega extension.");
@@ -86,7 +86,7 @@ export function activate(context: vscode.ExtensionContext) {
       return;
     }
     // format_surrounding_region(editor);
-    let ast = parseText(editor.document.getText());
+    let [ast, maxLine] = parseText(editor.document.getText());
     if (ast.type != TokenType.Start) {
       /* Error */
       return;
@@ -94,7 +94,7 @@ export function activate(context: vscode.ExtensionContext) {
     editor.edit(editBuilder => {
       let document = editor.document;
       let range = new vscode.Range(document.positionAt(0), document.positionAt(document.getText().length));
-      editBuilder.replace(range, ast.formatChildren(0));
+      editBuilder.replace(range, format_doc(ast, maxLine));
     });
   });
 }
@@ -186,7 +186,7 @@ function getFormatRange(text: string, startOffset: number, endOffset: number): [
   return [rangeStartOffset, rangeEndOffset];
 }
 
-function findPreviousWordStart(text: string, initialOffset: number): number {
+export function findPreviousWordStart(text: string, initialOffset: number): number {
   let currentOffset = initialOffset;
   if (initialOffset > text.length) {
     return 0;

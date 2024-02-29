@@ -1,3 +1,5 @@
+import { findPreviousWordStart } from "./extension";
+
 function getWordChars(): string[] {
     return ['(', ')', '{', '}', '[', ']'];
 }
@@ -94,6 +96,16 @@ export class Node {
     }
 }
 
+
+
+function format_line(nodes: Node[], prevLine: string) {
+    let parentNode = new Node(TokenType.Start, "start", 0);
+    parentNode.children = nodes;
+    let line = parentNode.formatChildren(0).trimStart().trimEnd();
+    let prevWordPos = findPreviousWordStart(prevLine.concat(" "), prevLine.length + 1);
+    return " ".repeat(prevWordPos).concat(line);
+}
+
 function get_line(node: Node, line: number): Node[] {
     let nodes: Node[] = [];
     if (node.line === line) {
@@ -104,6 +116,19 @@ function get_line(node: Node, line: number): Node[] {
     }
 
     return nodes.concat(node.children.map(child => get_line(child, line)).flat());
+}
+
+export function format_doc(node: Node, maxLine: number): string {
+    let text = "";
+    let parent = new Node(TokenType.Start, "start", 0);
+    parent.children = get_line(node, 0);
+    let prevLine = parent.formatChildren(0).trimStart().trimEnd();
+    for(let i = 1; i < maxLine; i++){
+        let newLine = format_line(get_line(node, i), prevLine);
+        text += newLine;
+        prevLine = newLine;
+    }
+    return text;
 }
 
 function parseToken(token: string, line: number): Node {
@@ -125,15 +150,16 @@ function tokenize(text: string): string[] {
         .replace(/\n/g, ' \n ').trim().split(/[\t|' ']+/);
 }
 
-export function parseText(text: string): Node {
+export function parseText(text: string): [Node, number] {
     let parentNode = new Node(TokenType.Start, "StartNode", 0);
     let _ = 0;
     let tokens = tokenize(text);
-    [parentNode.children, _, _] = parse(parentNode, tokens, 0, 0);
+    let maxLine;
+    [parentNode.children, _, maxLine] = parse(parentNode, tokens, 0, 0);
     let s = parentNode.formatChildren(0);
     parentNode.assignParents();
     let line = get_line(parentNode, 2);
-    return parentNode;
+    return [parentNode, maxLine];
 }
 
 export function parse(node: Node, tokens: string[], index: number, line: number): [Node[], number, number] {

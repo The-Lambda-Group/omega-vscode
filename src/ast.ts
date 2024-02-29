@@ -102,9 +102,8 @@ function get_line(node: Node, line: number): Node[] {
     else if(node.line > line) {
         return nodes;
     }
-    let children = node.children.map(child => get_line(child, line));
-    nodes.concat(children.flat());
-    return nodes;
+
+    return nodes.concat(node.children.map(child => get_line(child, line)).flat());
 }
 
 function parseToken(token: string, line: number): Node {

@@ -105,6 +105,17 @@ export class Node {
     }
 }
 
+export function get_node_document_pos(node: Node, lineText: string) {
+    let tokenized = tokenize(lineText);
+    let lastPos = 0;
+    for(let i = 0; i < tokenized.length; i++) {
+        lastPos = lineText.indexOf(tokenized[i], lastPos);
+        if(tokenized[i] === node.text) {
+            return lastPos;
+        }
+    }
+}
+
 /* Text should end at the node position */
 export function get_selected_node(parentNode: Node, line: number, position: number, text: string): Node {
     let linePos = tokenize(text).length;

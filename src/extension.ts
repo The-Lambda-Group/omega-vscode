@@ -99,7 +99,7 @@ export function activate(context: vscode.ExtensionContext) {
       let line = selection.start.line;
       let pos = selection.start.character;
       const lineText = document.lineAt(selection.start).text;
-      let n = get_selected_node(ast, line, pos, lineText);
+      let n = get_selected_node(ast, line, pos, lineText.substring(0, pos));
 
       editBuilder.replace(range, format_doc(ast, maxLine));
     });

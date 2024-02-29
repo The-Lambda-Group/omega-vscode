@@ -105,18 +105,12 @@ export class Node {
     }
 }
 
+/* Text should end at the node position */
 export function get_selected_node(parentNode: Node, line: number, position: number, text: string): Node {
-    let currLocation = position;
-    let wordCount = 0;
-    while(currLocation > 0) {
-        currLocation = findPreviousWordStart(text, currLocation) - 1;
-        if (currLocation !== -2) {
-            wordCount++;
-        }
-    }
-    let nodes = parentNode.findNode(line, wordCount);
+    let linePos = tokenize(text).length;
+    let nodes = parentNode.findNode(line, linePos);
     if (nodes.length === 0) {
-        return new Node(TokenType.Start, "error", line, wordCount);
+        return new Node(TokenType.Start, "error", line, linePos);
     } 
     return nodes[0];
 }
@@ -188,7 +182,8 @@ export function parseText(text: string): [Node, number] {
 export function parse(node: Node, tokens: string[], index: number, line: number): [Node[], number, number] {
     let nodes: Node[] = [];
     let linePos = node.linePos;
-    for (let i = index; i < tokens.length; i++, linePos++) {
+    for (let i = index; i < tokens.length; i++) {
+        linePos++;
         let newNode = parseToken(tokens[i], line, linePos);
         if (newNode.type === TokenType.Open) {
             [newNode.children, i, line] = parse(newNode, tokens, i + 1, line);

@@ -40,7 +40,7 @@ export function activate(context: vscode.ExtensionContext) {
     jumpToSpot(false, true);
   });
   vscode.commands.registerCommand("omega.navigateLeft", () => {
-   navLeft(false);
+    navLeft(false);
   });
   vscode.commands.registerCommand("omega.navigateSelectRight", () => {
     jumpToSpot(true, true);
@@ -71,7 +71,7 @@ export function activate(context: vscode.ExtensionContext) {
     let prevSexp = selectedNode.parent;
     lineText = editor.document.lineAt(prevSexp.line).text;
     let newLinePos = get_node_document_pos(prevSexp, lineText);
-    if(newLinePos === undefined) {
+    if (newLinePos === undefined) {
       return;
     }
 
@@ -437,10 +437,10 @@ function navLeft(shouldSelect: boolean) {
   if (newSelectedNode.type === TokenType.Error) {
     return;
   }
-  
+
   lineText = editor.document.lineAt(newSelectedNode.line).text;
   let newLinePos = get_node_document_pos(newSelectedNode, lineText);
-  if(newLinePos === undefined) {
+  if (newLinePos === undefined) {
     return;
   }
 

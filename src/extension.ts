@@ -39,7 +39,7 @@ export function activate(context: vscode.ExtensionContext) {
     jumpToSpot(false, true);
   });
   vscode.commands.registerCommand("omega.navigateLeft", () => {
-    jumpToSpot(false, false);
+   navLeft(false);
   });
   vscode.commands.registerCommand("omega.navigateSelectRight", () => {
     jumpToSpot(true, true);
@@ -78,6 +78,7 @@ export function activate(context: vscode.ExtensionContext) {
     let newPosition = editor.document.positionAt(editor.document.offsetAt(new vscode.Position(prevSexp.line, newLinePos)));
     editor.selection = new vscode.Selection(newPosition, newPosition);
   });
+
   context.subscriptions.push(vscode.workspace.onDidChangeTextDocument((event: vscode.TextDocumentChangeEvent) => {
     // /* Check when we last ran aggressiveIndext */
     // let lastRun = context.workspaceState.get<number>("LastAggressiveIndentTime");
@@ -404,6 +405,43 @@ function find_format_range(text: string, startOffset: number, endOffset: number)
 
 
   return [0, 0];
+}
+
+function navLeft(shouldSelect: boolean) {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor) {
+    return;
+  }
+
+  let [ast, maxLine] = parseText(editor.document.getText());
+  if (ast.type !== TokenType.Start) {
+    return;
+  }
+
+  /* Get current Position */
+  const selection = editor.selection;
+  let line = selection.start.line;
+  let pos = selection.start.character;
+  let lineText = editor.document.lineAt(line).text;
+  let selectedNode = get_selected_node(ast, line, pos, lineText.substring(0, pos));
+  if (selectedNode.parent === undefined) {
+    return;
+  }
+  let parent = selectedNode.parent;
+  let newSelectedNode = selectedNode.getPreviousNode();
+  if (newSelectedNode.type === TokenType.Error) {
+    return;
+  }
+  
+  lineText = editor.document.lineAt(newSelectedNode.line).text;
+  let newLinePos = get_node_document_pos(newSelectedNode, lineText);
+  if(newLinePos === undefined) {
+    return;
+  }
+
+  /* Move the cursor */
+  let newPosition = editor.document.positionAt(editor.document.offsetAt(new vscode.Position(parent.line, newLinePos)));
+  editor.selection = new vscode.Selection(newPosition, newPosition);
 }
 
 function jumpToSpot(select: boolean, forward: boolean) {

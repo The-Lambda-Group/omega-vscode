@@ -38,7 +38,8 @@ export enum TokenType {
     Close,
     Fact,
     Newline,
-    Start
+    Start,
+    Error
 }
 
 export class Node {
@@ -48,13 +49,15 @@ export class Node {
     line: number;
     parent?: Node;
     linePos: number;
+    blockPos: number;
 
-    constructor(type: TokenType, text: string, line: number, linePos: number) {
+    constructor(type: TokenType, text: string, line: number, linePos: number, blockPos: number) {
         this.type = type;
         this.text = text;
         this.children = [];
         this.line = line;
         this.linePos = linePos;
+        this.blockPos = blockPos;
     }
 
     findNode(line: number, linePos: number): Node[] {
@@ -103,6 +106,23 @@ export class Node {
             child.assignParents();
         });
     }
+
+    getPreviousNode(): Node {
+        let parent = this.parent;
+        if(parent === undefined) {
+            return new Node(TokenType.Error, "error", 0, -1, -1);;
+        }
+        let newSelectedNode;
+        if(this.type === TokenType.Close) {
+          newSelectedNode = parent;
+        } else {
+          newSelectedNode = this.blockPos === 0 ? parent : parent.children[this.blockPos - 1];
+          if(newSelectedNode.type === TokenType.Newline) {
+            newSelectedNode = newSelectedNode.getPreviousNode();
+          }
+        }
+        return newSelectedNode;
+    }
 }
 
 export function get_node_document_pos(node: Node, lineText: string) {
@@ -121,13 +141,13 @@ export function get_selected_node(parentNode: Node, line: number, position: numb
     let linePos = tokenize(text).length - 1;
     let nodes = parentNode.findNode(line, linePos);
     if (nodes.length === 0) {
-        return new Node(TokenType.Start, "error", line, -1);
+        return new Node(TokenType.Start, "error", line, -1, -1);
     } 
     return nodes[0];
 }
 
 function format_line(nodes: Node[], prevLine: string) {
-    let parentNode = new Node(TokenType.Start, "start", 0, -1);
+    let parentNode = new Node(TokenType.Start, "start", 0, -1, -1);
     parentNode.children = nodes;
     let line = parentNode.formatChildren(0).trimStart().trimEnd();
     let prevWordPos = findPreviousWordStart(prevLine.concat(" "), prevLine.length + 1);
@@ -148,7 +168,7 @@ function get_line(node: Node, line: number): Node[] {
 
 export function format_doc(node: Node, maxLine: number): string {
     let text = "";
-    let parent = new Node(TokenType.Start, "start", 0, -1);
+    let parent = new Node(TokenType.Start, "start", 0, -1, -1);
     parent.children = get_line(node, 0);
     let prevLine = parent.formatChildren(0).trimStart().trimEnd();
     for(let i = 1; i < maxLine; i++){
@@ -159,15 +179,15 @@ export function format_doc(node: Node, maxLine: number): string {
     return text;
 }
 
-function parseToken(token: string, line: number, linePos: number): Node {
+function parseToken(token: string, line: number, linePos: number, blockPos: number): Node {
     if (isBlockOpenChar(token)) {
-        return new Node(TokenType.Open, token, line, linePos);
+        return new Node(TokenType.Open, token, line, linePos, blockPos);
     } else if (isBlockEndChar(token)) {
-        return new Node(TokenType.Close, token, line, linePos);
+        return new Node(TokenType.Close, token, line, linePos,blockPos);
     } else if (isWhiteSpaceChar(token)) {
-        return new Node(TokenType.Newline, token, line, linePos);
+        return new Node(TokenType.Newline, token, line, linePos, blockPos);
     } else {
-        return new Node(TokenType.Fact, token, line, linePos);
+        return new Node(TokenType.Fact, token, line, linePos, blockPos);
     }
 }
 
@@ -179,7 +199,7 @@ function tokenize(text: string): string[] {
 }
 
 export function parseText(text: string): [Node, number] {
-    let parentNode = new Node(TokenType.Start, "StartNode", 0, -1);
+    let parentNode = new Node(TokenType.Start, "StartNode", 0, -1, -1);
     let _ = 0;
     let tokens = tokenize(text);
     let maxLine;
@@ -193,9 +213,10 @@ export function parseText(text: string): [Node, number] {
 export function parse(node: Node, tokens: string[], line: number, index: number): [Node[], number, number] {
     let nodes: Node[] = [];
     let linePos = node.linePos;
-    for (let i = index; i < tokens.length; i++) {
+    let blockPos = 0;
+    for (let i = index; i < tokens.length; i++, blockPos++) {
         linePos++;
-        let newNode = parseToken(tokens[i], line, linePos);
+        let newNode = parseToken(tokens[i], line, linePos, blockPos);
         if (newNode.type === TokenType.Open) {
             [newNode.children, i, line] = parse(newNode, tokens, line, i + 1);
         } else if (newNode.type === TokenType.Close) {

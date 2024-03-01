@@ -77,6 +77,11 @@
         "command": "omega.aggressiveIndent",
         "linux": "Alt+Shift+f",
         "key": "Alt+Shift+f"
+      },
+      {
+        "command": "omega.sexpStart",
+        "linux": "Alt+Shift+s",
+        "key": "Alt+Shift+s"
       }
     ],
     "menus": {

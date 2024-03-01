@@ -47,6 +47,37 @@ export function activate(context: vscode.ExtensionContext) {
   vscode.commands.registerCommand("omega.navigateSelectLeft", () => {
     jumpToSpot(true, false);
   });
+  vscode.commands.registerCommand("omega.sexpStart", () => {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      return;
+    }
+
+    let [ast, maxLine] = parseText(editor.document.getText());
+    if (ast.type !== TokenType.Start) {
+      return;
+    }
+
+    /* Get current Position */
+    const selection = editor.selection;
+    let line = selection.start.line;
+    let pos = selection.start.character;
+    let lineText = editor.document.lineAt(line).text;
+    let selectedNode = get_selected_node(ast, line, pos, lineText.substring(0, pos));
+    if (selectedNode.parent === undefined) {
+      return;
+    }
+    let prevSexp = selectedNode.parent;
+    lineText = editor.document.lineAt(prevSexp.line).text;
+    let newLinePos = get_node_document_pos(prevSexp, lineText);
+    if(newLinePos === undefined) {
+      return;
+    }
+
+    /* Move the cursor */
+    let newPosition = editor.document.positionAt(editor.document.offsetAt(new vscode.Position(prevSexp.line, newLinePos)));
+    editor.selection = new vscode.Selection(newPosition, newPosition);
+  });
   context.subscriptions.push(vscode.workspace.onDidChangeTextDocument((event: vscode.TextDocumentChangeEvent) => {
     // /* Check when we last ran aggressiveIndext */
     // let lastRun = context.workspaceState.get<number>("LastAggressiveIndentTime");
@@ -82,10 +113,10 @@ export function activate(context: vscode.ExtensionContext) {
   }));
   vscode.commands.registerCommand("omega.aggressiveIndent", () => {
     const editor = vscode.window.activeTextEditor;
-    if(!editor) {
+    if (!editor) {
       return;
     }
-    // format_surrounding_region(editor);
+
     let [ast, maxLine] = parseText(editor.document.getText());
     if (ast.type !== TokenType.Start) {
       /* Error */
@@ -100,7 +131,6 @@ export function activate(context: vscode.ExtensionContext) {
       let pos = selection.start.character;
       const lineText = document.lineAt(selection.start).text;
       let n = get_selected_node(ast, line, pos, lineText.substring(0, pos));
-      let t = get_node_document_pos(n, lineText);
 
       editBuilder.replace(range, format_doc(ast, maxLine));
     });
@@ -248,11 +278,11 @@ function formatRange(
   }
 };
 
-async function balanceLines(editor: vscode.TextEditor, 
-                      line1: string, 
-                      line2: vscode.TextLine): Promise<string>  {
+async function balanceLines(editor: vscode.TextEditor,
+  line1: string,
+  line2: vscode.TextLine): Promise<string> {
   let leadingWhiteSpace = line1.length - line1.trimStart().length;
-  let leadingTabCount =  line1.substring(0, leadingWhiteSpace).match("/\t/g")?.length ?? 0;
+  let leadingTabCount = line1.substring(0, leadingWhiteSpace).match("/\t/g")?.length ?? 0;
   let newLine2 = "\t".repeat(leadingTabCount).concat(" ".repeat(leadingWhiteSpace - leadingTabCount).concat(line2.text.trimStart().trimEnd()));
   await editor.edit(editBuilder => {
     editBuilder.replace(line2.range, newLine2);
@@ -274,7 +304,7 @@ async function format_block(editor: vscode.TextEditor, document: vscode.TextDocu
   let currLine = document.lineAt(range.start.line).text;
   let endLine = document.lineAt(range.end.line);
 
-  for(let i = range.start.line; i < endLine.lineNumber; i++) {
+  for (let i = range.start.line; i < endLine.lineNumber; i++) {
     let nextLine = document.lineAt(i + 1);
     currLine = await balanceLines(editor, currLine, nextLine);
   }

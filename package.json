@@ -50,6 +50,11 @@
         "command": "omega.deleteEntry",
         "title": "Omega: Delete Item",
         "icon": "$(trash)"
+      },
+      {
+        "command": "omega.runBuffer",
+        "title": "Omega: Evaluate Buffer",
+        "icon": "$(play)"
       }
     ],
     "keybindings": [
@@ -82,6 +87,11 @@
         "command": "omega.sexpStart",
         "linux": "Alt+Shift+s",
         "key": "Alt+Shift+s"
+      },
+      {
+        "command": "omega.runBuffer",
+        "linux": "Alt+Shift+e",
+        "key": "Alt+Shift+e"
       }
     ],
     "menus": {

@@ -4,6 +4,7 @@ import { DBNodeTreeItem, OmegaTreeViewProvider } from "./tree_node";
 import { open } from "fs";
 import { DatastoreNode } from "./tree_node/data_type/datastore";
 import { TokenType, format_doc, get_node_document_pos, get_selected_node, parse, parseText } from "./ast";
+import { runBuffer } from "./run";
 
 export function activate(context: vscode.ExtensionContext) {
   console.log("activating Omega extension.");
@@ -135,6 +136,10 @@ export function activate(context: vscode.ExtensionContext) {
 
       editBuilder.replace(range, format_doc(ast, maxLine));
     });
+  });
+  const outputChannel = vscode.window.createOutputChannel("OmegaDB Output");
+  vscode.commands.registerCommand("omega.runBuffer", () => {
+    runBuffer(outputChannel);
   });
 }
 

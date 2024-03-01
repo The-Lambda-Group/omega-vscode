@@ -110,7 +110,7 @@ export function get_node_document_pos(node: Node, lineText: string) {
     let lastPos = 0;
     for(let i = 0; i < tokenized.length; i++) {
         lastPos = lineText.indexOf(tokenized[i], lastPos);
-        if(tokenized[i] === node.text) {
+        if(i === node.linePos && tokenized[i] === node.text) {
             return lastPos;
         }
     }
@@ -118,16 +118,16 @@ export function get_node_document_pos(node: Node, lineText: string) {
 
 /* Text should end at the node position */
 export function get_selected_node(parentNode: Node, line: number, position: number, text: string): Node {
-    let linePos = tokenize(text).length;
+    let linePos = tokenize(text).length - 1;
     let nodes = parentNode.findNode(line, linePos);
     if (nodes.length === 0) {
-        return new Node(TokenType.Start, "error", line, linePos);
+        return new Node(TokenType.Start, "error", line, -1);
     } 
     return nodes[0];
 }
 
 function format_line(nodes: Node[], prevLine: string) {
-    let parentNode = new Node(TokenType.Start, "start", 0, 0);
+    let parentNode = new Node(TokenType.Start, "start", 0, -1);
     parentNode.children = nodes;
     let line = parentNode.formatChildren(0).trimStart().trimEnd();
     let prevWordPos = findPreviousWordStart(prevLine.concat(" "), prevLine.length + 1);
@@ -148,7 +148,7 @@ function get_line(node: Node, line: number): Node[] {
 
 export function format_doc(node: Node, maxLine: number): string {
     let text = "";
-    let parent = new Node(TokenType.Start, "start", 0, 0);
+    let parent = new Node(TokenType.Start, "start", 0, -1);
     parent.children = get_line(node, 0);
     let prevLine = parent.formatChildren(0).trimStart().trimEnd();
     for(let i = 1; i < maxLine; i++){
@@ -179,7 +179,7 @@ function tokenize(text: string): string[] {
 }
 
 export function parseText(text: string): [Node, number] {
-    let parentNode = new Node(TokenType.Start, "StartNode", 0, 0);
+    let parentNode = new Node(TokenType.Start, "StartNode", 0, -1);
     let _ = 0;
     let tokens = tokenize(text);
     let maxLine;
@@ -190,14 +190,14 @@ export function parseText(text: string): [Node, number] {
     return [parentNode, maxLine];
 }
 
-export function parse(node: Node, tokens: string[], index: number, line: number): [Node[], number, number] {
+export function parse(node: Node, tokens: string[], line: number, index: number): [Node[], number, number] {
     let nodes: Node[] = [];
     let linePos = node.linePos;
     for (let i = index; i < tokens.length; i++) {
         linePos++;
         let newNode = parseToken(tokens[i], line, linePos);
         if (newNode.type === TokenType.Open) {
-            [newNode.children, i, line] = parse(newNode, tokens, i + 1, line);
+            [newNode.children, i, line] = parse(newNode, tokens, line, i + 1);
         } else if (newNode.type === TokenType.Close) {
             nodes.push(newNode);
             return [nodes, i, line];

@@ -3,7 +3,7 @@ import { OmegaDocumentProvider } from "./docs";
 import { DBNodeTreeItem, OmegaTreeViewProvider } from "./tree_node";
 import { open } from "fs";
 import { DatastoreNode } from "./tree_node/data_type/datastore";
-import { TokenType, format_doc, get_selected_node, parse, parseText } from "./ast";
+import { TokenType, format_doc, get_node_document_pos, get_selected_node, parse, parseText } from "./ast";
 
 export function activate(context: vscode.ExtensionContext) {
   console.log("activating Omega extension.");
@@ -100,7 +100,7 @@ export function activate(context: vscode.ExtensionContext) {
       let pos = selection.start.character;
       const lineText = document.lineAt(selection.start).text;
       let n = get_selected_node(ast, line, pos, lineText.substring(0, pos));
-      // let t = get_node_document_pos()
+      let t = get_node_document_pos(n, lineText);
 
       editBuilder.replace(range, format_doc(ast, maxLine));
     });
@@ -197,9 +197,9 @@ function getFormatRange(text: string, startOffset: number, endOffset: number): [
 export function findPreviousWordStart(text: string, initialOffset: number): number {
   let currentOffset = initialOffset;
   if (initialOffset > text.length) {
-    return 0;
+    return -1;
   } else if (initialOffset === 0) {
-    return 0;
+    return -1;
   }
 
   /* Why are we sometimes double hitting */

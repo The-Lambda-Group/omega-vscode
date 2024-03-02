@@ -17,10 +17,14 @@ export const runBuffer = async (outputChannel: vscode.OutputChannel) => {
   const editor = vscode.window.activeTextEditor;
   if (editor) {
     const text = editor.document.getText();
-    const queryResult = await queryContent("http://localhost:3001", text);
+    const queryResult = await queryContent("http://localhost:3001", text).catch(
+      (e) => {
+        return "Query Failed";
+      }
+    );
     outputChannel.clear();
-    outputChannel.show();
-    outputChannel.appendLine(JSON.stringify(queryResult, null, 4));
+    outputChannel.show(true);
+    outputChannel.appendLine(JSON.stringify(queryResult, null, 2));
   } else {
     vscode.window.showErrorMessage("No active text editor.");
   }

@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import {
+  Node,
   TokenType,
   format_doc,
   get_node_document_pos,
@@ -13,22 +14,12 @@ export function getSexpStart(editor: vscode.TextEditor) {
     return;
   }
 
-  /* Get current Position */
-  const selection = editor.selection;
-  let line = selection.start.line;
-  let pos = selection.start.character;
-  let lineText = editor.document.lineAt(line).text;
-  let selectedNode = get_selected_node(
-    ast,
-    line,
-    pos,
-    lineText.substring(0, pos)
-  );
+  let selectedNode = getCurrentNode(editor, ast);
   if (selectedNode.parent === undefined) {
     return;
   }
   let prevSexp = selectedNode.parent;
-  lineText = editor.document.lineAt(prevSexp.line).text;
+  let lineText = editor.document.lineAt(prevSexp.line).text;
   let newLinePos = get_node_document_pos(prevSexp, lineText);
   if (newLinePos === undefined) {
     return;
@@ -41,6 +32,20 @@ export function getSexpStart(editor: vscode.TextEditor) {
   editor.selection = new vscode.Selection(newPosition, newPosition);
 }
 
+export function getCurrentNode(editor: vscode.TextEditor, parentNode: Node) {
+  const selection = editor.selection;
+  let line = selection.start.line;
+  let pos = selection.start.character;
+  let lineText = editor.document.lineAt(line).text;
+  let selectedNode = get_selected_node(
+    parentNode,
+    line,
+    pos,
+    lineText.substring(0, pos)
+  );
+  return selectedNode;
+}
+
 export function getSexpEnd(editor: vscode.TextEditor) {
   let [ast, maxLine] = parseText(editor.document.getText());
   if (ast.type !== TokenType.Start) {
@@ -48,21 +53,12 @@ export function getSexpEnd(editor: vscode.TextEditor) {
   }
 
   /* Get current Position */
-  const selection = editor.selection;
-  let line = selection.start.line;
-  let pos = selection.start.character;
-  let lineText = editor.document.lineAt(line).text;
-  let selectedNode = get_selected_node(
-    ast,
-    line,
-    pos,
-    lineText.substring(0, pos)
-  );
+  let selectedNode = getCurrentNode(editor, ast);
   if (selectedNode.parent === undefined) {
     return;
   }
   let blockClose = selectedNode.getBlockClose();
-  lineText = editor.document.lineAt(blockClose.line).text;
+  let lineText = editor.document.lineAt(blockClose.line).text;
   let newLinePos = get_node_document_pos(blockClose, lineText);
   if (newLinePos === undefined) {
     return;
@@ -278,21 +274,36 @@ async function balanceLines(
   return newLine2;
 }
 
-function getSurroundingBlock(text: string, offset: number): [number, number] {
-  /* If we go forwards, we can find the pair easiest (fuck! that's not true) */
-  let openOffset = findBlockOpener(text, offset);
-  if (openOffset === -1) {
-    return [-1, -1];
-  }
-  let closeOffset = findNextBalancedChar(
-    text,
-    text[openOffset],
-    getPairOpposite(text[openOffset]),
-    offset,
-    true
-  );
-  return [openOffset, closeOffset];
+function getSurroundingBlock(
+  editor: vscode.TextEditor,
+  node: Node
+): [number, number] {
+  let openNode = node.parent ?? node;
+  let closeNode = node.getBlockClose();
+
+  return [
+    get_node_document_pos(node, editor.document.lineAt(openNode.line).text) ??
+      0,
+    get_node_document_pos(node, editor.document.lineAt(closeNode.line).text) ??
+      0,
+  ];
 }
+
+// function getSurroundingBlock(text: string, offset: number): [number, number] {
+//   /* If we go forwards, we can find the pair easiest (fuck! that's not true) */
+//   let openOffset = findBlockOpener(text, offset);
+//   if (openOffset === -1) {
+//     return [-1, -1];
+//   }
+//   let closeOffset = findNextBalancedChar(
+//     text,
+//     text[openOffset],
+//     getPairOpposite(text[openOffset]),
+//     offset,
+//     true
+//   );
+//   return [openOffset, closeOffset];
+// }
 
 async function format_block(
   editor: vscode.TextEditor,
@@ -308,10 +319,13 @@ async function format_block(
   }
 }
 
-async function format_surrounding_region(editor: vscode.TextEditor) {
+export async function format_surrounding_region(editor: vscode.TextEditor) {
   let document = editor.document;
   let startPos = document.offsetAt(editor.selection.active);
-  let [start, end] = getSurroundingBlock(document.getText(), startPos);
+
+  let [ast, maxLine] = parseText(document.getText());
+  let currentNode = getCurrentNode(editor, ast);
+  let [start, end] = getSurroundingBlock(editor, currentNode);
   await format_block(
     editor,
     document,

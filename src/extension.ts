@@ -10,7 +10,7 @@ import {
   get_selected_node,
   parseText,
 } from "./editing/ast";
-import { getSexpEnd, getSexpStart } from "./editing/editor";
+import { format_surrounding_region, getSexpEnd, getSexpStart } from "./editing/editor";
 
 export function activate(context: vscode.ExtensionContext) {
   console.log("activating Omega extension.");
@@ -66,6 +66,13 @@ export function activate(context: vscode.ExtensionContext) {
       return;
     }
     getSexpEnd(editor);
+  });
+  vscode.commands.registerCommand("omega.formatBlock", async () => {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      return;
+    }
+    await format_surrounding_region(editor);
   });
 
   context.subscriptions.push(

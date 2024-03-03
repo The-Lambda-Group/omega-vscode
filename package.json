@@ -97,6 +97,11 @@
         "command": "omega.runBuffer",
         "linux": "Alt+Shift+e",
         "key": "Alt+Shift+e"
+      },
+      {
+        "command": "omega.formatBlock",
+        "linux": "Alt+b",
+        "key": "Alt+b"
       }
     ],
     "menus": {

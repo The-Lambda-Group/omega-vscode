@@ -1,4 +1,4 @@
-import { findPreviousWordStart } from "./extension";
+import { findPreviousWordStart } from "./editor";
 
 function getWordChars(): string[] {
   return ["(", ")", "{", "}", "[", "]"];

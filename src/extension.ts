@@ -10,6 +10,7 @@ import {
   get_selected_node,
   parseText,
 } from "./editing/ast";
+import { getSexpEnd, getSexpStart } from "./editing/editor";
 
 export function activate(context: vscode.ExtensionContext) {
   console.log("activating Omega extension.");
@@ -57,60 +58,19 @@ export function activate(context: vscode.ExtensionContext) {
     if (!editor) {
       return;
     }
-
-    let [ast, maxLine] = parseText(editor.document.getText());
-    if (ast.type !== TokenType.Start) {
+    getSexpStart(editor);
+  });
+  vscode.commands.registerCommand("omega.sexpEnd", () => {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
       return;
     }
-
-    /* Get current Position */
-    const selection = editor.selection;
-    let line = selection.start.line;
-    let pos = selection.start.character;
-    let lineText = editor.document.lineAt(line).text;
-    let selectedNode = get_selected_node(
-      ast,
-      line,
-      pos,
-      lineText.substring(0, pos)
-    );
-    if (selectedNode.parent === undefined) {
-      return;
-    }
-    let prevSexp = selectedNode.parent;
-    lineText = editor.document.lineAt(prevSexp.line).text;
-    let newLinePos = get_node_document_pos(prevSexp, lineText);
-    if (newLinePos === undefined) {
-      return;
-    }
-
-    /* Move the cursor */
-    let newPosition = editor.document.positionAt(
-      editor.document.offsetAt(new vscode.Position(prevSexp.line, newLinePos))
-    );
-    editor.selection = new vscode.Selection(newPosition, newPosition);
+    getSexpEnd(editor);
   });
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeTextDocument(
       (event: vscode.TextDocumentChangeEvent) => {
-        // /* Check when we last ran aggressiveIndext */
-        // let lastRun = context.workspaceState.get<number>("LastAggressiveIndentTime");
-        // if (lastRun === undefined) {
-        //   lastRun = 0;
-        // }
-        // let currTime = new Date().getTime();
-        // if (currTime - lastRun < 100) {
-        //   return;
-        // }
-
-        // /* Get the overall text range to map over */
-        // let range = event.contentChanges.map((reason) => reason.range).reduce((acc, elem) => {
-        //   let start = acc.start.isBefore(elem.start) ? acc.start : elem.start;
-        //   let end = acc.end.isAfter(elem.end) ? acc.end : elem.end;
-        //   return new vscode.Range(start, end);
-        // });
-
         /* Format */
         let n = event.contentChanges.length;
         let x = event.contentChanges.map((reason) => {
@@ -122,7 +82,6 @@ export function activate(context: vscode.ExtensionContext) {
           }
           const document = editor.document;
           formatRange(editor, document, range, newText);
-          // context.workspaceState.update("LastAggressiveIndentTime", currTime);
         });
       }
     )

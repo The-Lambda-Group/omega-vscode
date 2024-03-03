@@ -85,6 +85,11 @@
       },
       {
         "command": "omega.sexpStart",
+        "linux": "Alt+s",
+        "key": "Alt+s"
+      },
+      {
+        "command": "omega.sexpEnd",
         "linux": "Alt+Shift+s",
         "key": "Alt+Shift+s"
       },

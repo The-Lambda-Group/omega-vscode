@@ -131,6 +131,27 @@ export class Node {
     }
     return newSelectedNode;
   }
+
+  getBlockClose(): Node {
+    let parent;
+    if (this.type === TokenType.Open) {
+      parent = this;
+    } else {
+      parent = this.parent;
+      if (this.parent === undefined) {
+        return new Node(TokenType.Error, "no parent", 0, 0, 0);
+      }
+    }
+
+    if (parent?.children.length === 0) {
+      return new Node(TokenType.Error, "child length 0", 0, 0, 0);
+    }
+    let lastChild = parent?.children[(parent?.children.length ?? 1) - 1];
+    if (lastChild?.type !== TokenType.Close) {
+      return new Node(TokenType.Error, "Unbalance Block Error!", 0, 0, 0);
+    }
+    return lastChild;
+  }
 }
 
 export function get_node_document_pos(node: Node, lineText: string) {

@@ -1,4 +1,5 @@
 import { findPreviousWordStart } from "./editor";
+import * as vscode from "vscode";
 
 function getWordChars(): string[] {
   return ["(", ")", "{", "}", "[", "]"];
@@ -114,7 +115,7 @@ export class Node {
     });
   }
 
-  getPreviousNode(): Node {
+  getPrevNode(): Node {
     let parent = this.parent;
     if (parent === undefined) {
       return new Node(TokenType.Error, "error", 0, -1, -1);
@@ -126,7 +127,25 @@ export class Node {
       newSelectedNode =
         this.blockPos === 0 ? parent : parent.children[this.blockPos - 1];
       if (newSelectedNode.type === TokenType.Newline) {
-        newSelectedNode = newSelectedNode.getPreviousNode();
+        newSelectedNode = newSelectedNode.getPrevNode();
+      }
+    }
+    return newSelectedNode;
+  }
+
+  getNextNode(): Node {
+    let parent = this.parent;
+    if (parent === undefined) {
+      return new Node(TokenType.Error, "No Parent Exists", 0, -1, -1);
+    }
+    let newSelectedNode;
+    if (this.type === TokenType.Close) {
+      return parent.getNextNode();
+    } else {
+      newSelectedNode =
+        this.blockPos === parent.children.length - 1 ? parent.getNextNode() : parent.children[this.blockPos + 1];
+      if (newSelectedNode.type === TokenType.Newline) {
+        newSelectedNode = newSelectedNode.getNextNode();
       }
     }
     return newSelectedNode;
@@ -148,22 +167,30 @@ export class Node {
     }
     let lastChild = parent?.children[(parent?.children.length ?? 1) - 1];
     if (lastChild?.type !== TokenType.Close) {
-      return new Node(TokenType.Error, "Unbalance Block Error!", 0, 0, 0);
+      return new Node(TokenType.Error, "Unbalanced Block Error!", 0, 0, 0);
     }
     return lastChild;
   }
-}
 
-export function get_node_document_pos(node: Node, lineText: string) {
-  let tokenized = tokenize(lineText);
-  let lastPos = 0;
-  for (let i = 0; i < tokenized.length; i++) {
-    lastPos = lineText.indexOf(tokenized[i], lastPos);
-    if (i === node.linePos && tokenized[i] === node.text) {
-      return lastPos;
+  get_doc_line_pos(lineText: string) {
+    let tokenized = tokenize(lineText);
+    let lastPos = 0;
+    for (let i = 0; i < tokenized.length; i++) {
+      lastPos = lineText.indexOf(tokenized[i], lastPos);
+      if (i === this.linePos && tokenized[i] === this.text) {
+        return lastPos;
+      }
     }
   }
+
+  get_doc_pos(editor: vscode.TextEditor) {
+    let lineText = editor.document.lineAt(this.line).text;
+    let linePos = this.get_doc_line_pos(lineText) ?? 0;
+    let position = new vscode.Position(this.line, linePos);  
+    return position;
+  }
 }
+
 
 /* Text should end at the node position */
 export function get_selected_node(

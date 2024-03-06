@@ -89,9 +89,14 @@
         "key": "Alt+s"
       },
       {
-        "command": "omega.sexpEnd",
+        "command": "omega.selectSexp",
         "linux": "Alt+Shift+s",
         "key": "Alt+Shift+s"
+      },
+      {
+        "command": "omega.sexpEnd",
+        "linux": "Alt+e",
+        "key": "Alt+Shift+e"
       },
       {
         "command": "omega.runBuffer",
@@ -102,6 +107,11 @@
         "command": "omega.formatBlock",
         "linux": "Alt+b",
         "key": "Alt+b"
+      },
+      {
+        "command": "omega.selectWord",
+        "linux": "Alt+w",
+        "key": "Alt+w"
       }
     ],
     "menus": {

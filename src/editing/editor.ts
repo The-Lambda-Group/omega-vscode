@@ -2,35 +2,11 @@ import * as vscode from "vscode";
 import {
   Node,
   TokenType,
-  format_doc,
-  get_node_document_pos,
   get_selected_node,
   parseText,
 } from "./ast";
 
-export function getSexpStart(editor: vscode.TextEditor) {
-  let [ast, maxLine] = parseText(editor.document.getText());
-  if (ast.type !== TokenType.Start) {
-    return;
-  }
 
-  let selectedNode = getCurrentNode(editor, ast);
-  if (selectedNode.parent === undefined) {
-    return;
-  }
-  let prevSexp = selectedNode.parent;
-  let lineText = editor.document.lineAt(prevSexp.line).text;
-  let newLinePos = get_node_document_pos(prevSexp, lineText);
-  if (newLinePos === undefined) {
-    return;
-  }
-
-  /* Move the cursor */
-  let newPosition = editor.document.positionAt(
-    editor.document.offsetAt(new vscode.Position(prevSexp.line, newLinePos))
-  );
-  editor.selection = new vscode.Selection(newPosition, newPosition);
-}
 
 export function getCurrentNode(editor: vscode.TextEditor, parentNode: Node) {
   const selection = editor.selection;
@@ -46,30 +22,6 @@ export function getCurrentNode(editor: vscode.TextEditor, parentNode: Node) {
   return selectedNode;
 }
 
-export function getSexpEnd(editor: vscode.TextEditor) {
-  let [ast, maxLine] = parseText(editor.document.getText());
-  if (ast.type !== TokenType.Start) {
-    return;
-  }
-
-  /* Get current Position */
-  let selectedNode = getCurrentNode(editor, ast);
-  if (selectedNode.parent === undefined) {
-    return;
-  }
-  let blockClose = selectedNode.getBlockClose();
-  let lineText = editor.document.lineAt(blockClose.line).text;
-  let newLinePos = get_node_document_pos(blockClose, lineText);
-  if (newLinePos === undefined) {
-    return;
-  }
-
-  /* Move the cursor */
-  let newPosition = editor.document.positionAt(
-    editor.document.offsetAt(new vscode.Position(blockClose.line, newLinePos))
-  );
-  editor.selection = new vscode.Selection(newPosition, newPosition);
-}
 
 function formatRange(
   editor: vscode.TextEditor,
@@ -277,33 +229,16 @@ async function balanceLines(
 function getSurroundingBlock(
   editor: vscode.TextEditor,
   node: Node
-): [number, number] {
+): [vscode.Position, vscode.Position] {
   let openNode = node.parent ?? node;
   let closeNode = node.getBlockClose();
 
-  return [
-    get_node_document_pos(node, editor.document.lineAt(openNode.line).text) ??
-      0,
-    get_node_document_pos(node, editor.document.lineAt(closeNode.line).text) ??
-      0,
-  ];
+  let openPos = openNode.get_doc_pos(editor);
+  let closePos = closeNode.get_doc_pos(editor);
+
+  return [openPos, closePos];
 }
 
-// function getSurroundingBlock(text: string, offset: number): [number, number] {
-//   /* If we go forwards, we can find the pair easiest (fuck! that's not true) */
-//   let openOffset = findBlockOpener(text, offset);
-//   if (openOffset === -1) {
-//     return [-1, -1];
-//   }
-//   let closeOffset = findNextBalancedChar(
-//     text,
-//     text[openOffset],
-//     getPairOpposite(text[openOffset]),
-//     offset,
-//     true
-//   );
-//   return [openOffset, closeOffset];
-// }
 
 async function format_block(
   editor: vscode.TextEditor,
@@ -312,6 +247,8 @@ async function format_block(
 ) {
   let currLine = document.lineAt(range.start.line).text;
   let endLine = document.lineAt(range.end.line);
+  // This is the depth we want
+  let whitespace = range.start.character;
 
   for (let i = range.start.line; i < endLine.lineNumber; i++) {
     let nextLine = document.lineAt(i + 1);
@@ -321,7 +258,6 @@ async function format_block(
 
 export async function format_surrounding_region(editor: vscode.TextEditor) {
   let document = editor.document;
-  let startPos = document.offsetAt(editor.selection.active);
 
   let [ast, maxLine] = parseText(document.getText());
   let currentNode = getCurrentNode(editor, ast);
@@ -329,7 +265,7 @@ export async function format_surrounding_region(editor: vscode.TextEditor) {
   await format_block(
     editor,
     document,
-    new vscode.Range(document.positionAt(start), document.positionAt(end))
+    new vscode.Range(start, end)
   );
 }
 
@@ -467,21 +403,12 @@ function navLeft(shouldSelect: boolean) {
     return;
   }
   let parent = selectedNode.parent;
-  let newSelectedNode = selectedNode.getPreviousNode();
+  let newSelectedNode = selectedNode.getPrevNode();
   if (newSelectedNode.type === TokenType.Error) {
     return;
   }
 
-  lineText = editor.document.lineAt(newSelectedNode.line).text;
-  let newLinePos = get_node_document_pos(newSelectedNode, lineText);
-  if (newLinePos === undefined) {
-    return;
-  }
-
-  /* Move the cursor */
-  let newPosition = editor.document.positionAt(
-    editor.document.offsetAt(new vscode.Position(parent.line, newLinePos))
-  );
+  let newPosition = newSelectedNode.get_doc_pos(editor);
   editor.selection = new vscode.Selection(newPosition, newPosition);
 }
 

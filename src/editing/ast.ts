@@ -282,7 +282,6 @@ export function parseText(text: string): [Node, number] {
   [parentNode.children, _, maxLine] = parse(parentNode, tokens, 0, 0);
   let s = parentNode.formatChildren(0);
   parentNode.assignParents();
-  let line = get_line(parentNode, 2);
   return [parentNode, maxLine];
 }
 
@@ -300,6 +299,7 @@ export function parse(
     let newNode = parseToken(tokens[i], line, linePos, blockPos);
     if (newNode.type === TokenType.Open) {
       [newNode.children, i, line] = parse(newNode, tokens, line, i + 1);
+      linePos = newNode.children[newNode.children.length - 1].linePos;
     } else if (newNode.type === TokenType.Close) {
       nodes.push(newNode);
       return [nodes, i, line];

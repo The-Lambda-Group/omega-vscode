@@ -10,7 +10,8 @@ export function moveToNode(editor: vscode.TextEditor, node: Node) {
 
 export function selectNodes(editor: vscode.TextEditor, ast: Node, openNode: Node, closeNode: Node) {
   let openNodePos = openNode.get_doc_pos(editor);
-  let closeNodePos = closeNode.get_doc_pos(editor);
+  let closeNodeStartPos = closeNode.get_doc_pos(editor);
+  let closeNodePos = new vscode.Position(closeNodeStartPos.line, closeNodeStartPos.character + closeNode.text.length);
 
   editor.selection = new vscode.Selection(openNodePos, closeNodePos);
 }

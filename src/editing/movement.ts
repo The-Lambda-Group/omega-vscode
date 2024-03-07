@@ -2,7 +2,17 @@ import * as vscode from "vscode";
 import { Node, TokenType, parseText } from "./ast";
 import { getCurrentNode, printErrorMessage } from "./editor";
 
+export function moveToStart(editor: vscode.TextEditor) {
+  let pos = new vscode.Position(0, 0);
+  editor.selection = new vscode.Selection(pos, pos);
+}
+
 export function moveToNode(editor: vscode.TextEditor, node: Node) {
+  if (node.type === TokenType.Start) {
+    let pos = new vscode.Position(0, 0);
+    editor.selection = new vscode.Selection(pos, pos);
+    return;
+  }
   let startPosition = node.get_doc_start_pos(editor);
   let endPosition = new vscode.Position(
     startPosition.line,
@@ -10,6 +20,11 @@ export function moveToNode(editor: vscode.TextEditor, node: Node) {
   );
 
   editor.selection = new vscode.Selection(endPosition, endPosition);
+}
+
+export function moveToEnd(editor: vscode.TextEditor) {
+  let pos = editor.document.positionAt(editor.document.getText().length);
+  editor.selection = new vscode.Selection(pos, pos);
 }
 
 export function selectNodes(
@@ -137,13 +152,53 @@ export function pareditForward(editor: vscode.TextEditor) {
       nextNode = node.getNextNode();
       break;
     case TokenType.Start:
+    case TokenType.End:
     case TokenType.Error:
       printErrorMessage(editor, "Invalid Input: " + node.toString());
       return;
   }
   if (nextNode.type === TokenType.Error) {
     printErrorMessage(editor, "No next node: " + node.toString());
+    return;
+  } else if (nextNode.type === TokenType.End) {
+    moveToEnd(editor);
+    return;
   }
 
   moveToNode(editor, nextNode);
+}
+
+export function pareditBackward(editor: vscode.TextEditor) {
+  let [ast, maxLine] = parseText(editor.document.getText());
+  if (ast.type !== TokenType.Start) {
+    return;
+  }
+
+  let node = getCurrentNode(editor, ast);
+  if (node.parent === undefined) {
+    printErrorMessage(editor, "No parent exists: " + node.toString());
+    return;
+  }
+  let prevNode;
+  switch (node.type) {
+    case TokenType.Close:
+    case TokenType.Fact:
+    case TokenType.Newline:
+    case TokenType.Open:
+      prevNode = node.getPrevNode();
+      break;
+    case TokenType.Start:
+      moveToStart(editor);
+      return;
+    case TokenType.End:
+    case TokenType.Error:
+      printErrorMessage(editor, "Invalid Input: " + node.toString());
+      return;
+  }
+  if (prevNode.type === TokenType.Error) {
+    printErrorMessage(editor, "No previous node: " + node.toString());
+    return;
+  }
+
+  moveToNode(editor, prevNode);
 }

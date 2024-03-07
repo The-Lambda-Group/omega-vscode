@@ -13,6 +13,7 @@ import { format_surrounding_region } from "./editing/editor";
 import {
   getSexpEnd,
   getSexpStart,
+  pareditBackward,
   pareditForward,
   selectCurrSexp,
   selectNode,
@@ -103,6 +104,14 @@ export function activate(context: vscode.ExtensionContext) {
     }
 
     pareditForward(editor);
+  });
+  vscode.commands.registerCommand("omega.pareditBackward", async () => {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      return;
+    }
+
+    pareditBackward(editor);
   });
 
   context.subscriptions.push(

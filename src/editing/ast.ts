@@ -41,6 +41,7 @@ export enum TokenType {
   Newline,
   Start,
   Error,
+  End,
 }
 
 export class Node {
@@ -68,7 +69,15 @@ export class Node {
   }
 
   toString(): string {
-    let s = "Line: " + this.line + ", linePos: " + this.linePos + ", blockPos" + "this.blockPos" + ", text: " + this.text;
+    let s =
+      "Line: " +
+      this.line +
+      ", linePos: " +
+      this.linePos +
+      ", blockPos" +
+      "this.blockPos" +
+      ", text: " +
+      this.text;
     return s;
   }
 
@@ -123,7 +132,13 @@ export class Node {
   getPrevNode(): Node {
     let parent = this.parent;
     if (parent === undefined) {
-      return new Node(TokenType.Error, "error", 0, -1, -1);
+      return new Node(
+        TokenType.Error,
+        "No parent",
+        this.line,
+        this.linePos,
+        this.blockPos
+      );
     }
     let newSelectedNode;
     if (this.type === TokenType.Close) {
@@ -141,16 +156,27 @@ export class Node {
   getNextNode(): Node {
     let parent = this.parent;
     if (parent === undefined) {
-      return new Node(TokenType.Error, "No Parent Exists", 0, -1, -1);
+      return new Node(
+        TokenType.Error,
+        "No parent",
+        this.line,
+        this.linePos,
+        this.blockPos
+      );
     }
     let newSelectedNode;
     if (this.type === TokenType.Close) {
       return parent.getNextNode();
     } else {
-      newSelectedNode =
-        this.blockPos === parent.children.length - 1
-          ? parent.getNextNode()
-          : parent.children[this.blockPos + 1];
+      if (this.blockPos === parent.children.length - 1) {
+        if (parent.type === TokenType.Start) {
+          /* There is no next node */
+          return new Node(TokenType.End, "END", 0, 0, 0);
+        }
+        newSelectedNode = parent.getNextNode();
+      } else {
+        newSelectedNode = parent.children[this.blockPos + 1];
+      }
       if (newSelectedNode.type === TokenType.Newline) {
         newSelectedNode = newSelectedNode.getNextNode();
       }
@@ -165,7 +191,13 @@ export class Node {
     } else {
       parent = this.parent;
       if (this.parent === undefined) {
-        return new Node(TokenType.Error, "no parent", 0, 0, 0);
+        return new Node(
+          TokenType.Error,
+          "No parent",
+          this.line,
+          this.linePos,
+          this.blockPos
+        );
       }
     }
 

@@ -1,12 +1,9 @@
 import * as vscode from "vscode";
-import {
-  Node,
-  TokenType,
-  get_selected_node,
-  parseText,
-} from "./ast";
+import { Node, TokenType, get_selected_node, parseText } from "./ast";
 
-
+export function printErrorMessage(editor: vscode.TextEditor, error: string) {
+  /* TODO: Implement */
+}
 
 export function getCurrentNode(editor: vscode.TextEditor, parentNode: Node) {
   const selection = editor.selection;
@@ -21,7 +18,6 @@ export function getCurrentNode(editor: vscode.TextEditor, parentNode: Node) {
   );
   return selectedNode;
 }
-
 
 function formatRange(
   editor: vscode.TextEditor,
@@ -233,12 +229,11 @@ function getSurroundingBlock(
   let openNode = node.parent ?? node;
   let closeNode = node.getBlockClose();
 
-  let openPos = openNode.get_doc_pos(editor);
-  let closePos = closeNode.get_doc_pos(editor);
+  let openPos = openNode.get_doc_start_pos(editor);
+  let closePos = closeNode.get_doc_start_pos(editor);
 
   return [openPos, closePos];
 }
-
 
 async function format_block(
   editor: vscode.TextEditor,
@@ -262,11 +257,7 @@ export async function format_surrounding_region(editor: vscode.TextEditor) {
   let [ast, maxLine] = parseText(document.getText());
   let currentNode = getCurrentNode(editor, ast);
   let [start, end] = getSurroundingBlock(editor, currentNode);
-  await format_block(
-    editor,
-    document,
-    new vscode.Range(start, end)
-  );
+  await format_block(editor, document, new vscode.Range(start, end));
 }
 
 function aggressiveIndent(range: vscode.Range) {
@@ -408,7 +399,7 @@ function navLeft(shouldSelect: boolean) {
     return;
   }
 
-  let newPosition = newSelectedNode.get_doc_pos(editor);
+  let newPosition = newSelectedNode.get_doc_start_pos(editor);
   editor.selection = new vscode.Selection(newPosition, newPosition);
 }
 

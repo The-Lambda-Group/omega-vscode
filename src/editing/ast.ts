@@ -60,11 +60,16 @@ export class Node {
     blockPos: number
   ) {
     this.type = type;
-    this.text = text;
+    this.text = text.trimStart().trimEnd();
     this.children = [];
     this.line = line;
     this.linePos = linePos;
     this.blockPos = blockPos;
+  }
+
+  toString(): string {
+    let s = "Line: " + this.line + ", linePos: " + this.linePos + ", blockPos" + "this.blockPos" + ", text: " + this.text;
+    return s;
   }
 
   findNode(line: number, linePos: number): Node[] {
@@ -143,7 +148,9 @@ export class Node {
       return parent.getNextNode();
     } else {
       newSelectedNode =
-        this.blockPos === parent.children.length - 1 ? parent.getNextNode() : parent.children[this.blockPos + 1];
+        this.blockPos === parent.children.length - 1
+          ? parent.getNextNode()
+          : parent.children[this.blockPos + 1];
       if (newSelectedNode.type === TokenType.Newline) {
         newSelectedNode = newSelectedNode.getNextNode();
       }
@@ -183,14 +190,26 @@ export class Node {
     }
   }
 
-  get_doc_pos(editor: vscode.TextEditor) {
+  get_doc_start_pos(editor: vscode.TextEditor) {
     let lineText = editor.document.lineAt(this.line).text;
     let linePos = this.get_doc_line_pos(lineText) ?? 0;
-    let position = new vscode.Position(this.line, linePos);  
+    let position = new vscode.Position(this.line, linePos);
     return position;
   }
-}
 
+  check_balance(): boolean {
+    if (this.type === TokenType.Open) {
+      if (
+        this.children.length === 0 ||
+        this.children[this.children.length - 1].type !== TokenType.Close
+      ) {
+        return false;
+      }
+    }
+    let child_output = this.children.map((x) => x.check_balance());
+    return !child_output.includes(false);
+  }
+}
 
 /* Text should end at the node position */
 export function get_selected_node(

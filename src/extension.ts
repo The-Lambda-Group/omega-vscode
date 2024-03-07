@@ -10,7 +10,13 @@ import {
   parseText,
 } from "./editing/ast";
 import { format_surrounding_region } from "./editing/editor";
-import { getSexpEnd, getSexpStart, selectCurrSexp, selectNode } from "./editing/movement";
+import {
+  getSexpEnd,
+  getSexpStart,
+  pareditForward,
+  selectCurrSexp,
+  selectNode,
+} from "./editing/movement";
 
 export function activate(context: vscode.ExtensionContext) {
   console.log("activating Omega extension.");
@@ -79,7 +85,7 @@ export function activate(context: vscode.ExtensionContext) {
     if (!editor) {
       return;
     }
-    
+
     selectNode(editor);
   });
   vscode.commands.registerCommand("omega.selectSexp", async () => {
@@ -87,10 +93,17 @@ export function activate(context: vscode.ExtensionContext) {
     if (!editor) {
       return;
     }
-    
+
     selectCurrSexp(editor);
   });
+  vscode.commands.registerCommand("omega.pareditForward", async () => {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      return;
+    }
 
+    pareditForward(editor);
+  });
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeTextDocument(

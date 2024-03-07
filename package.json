@@ -112,6 +112,11 @@
         "command": "omega.selectWord",
         "linux": "Alt+w",
         "key": "Alt+w"
+      },
+      {
+        "command": "omega.pareditForward",
+        "linux": "Alt+f",
+        "key": "Alt+f"
       }
     ],
     "menus": {

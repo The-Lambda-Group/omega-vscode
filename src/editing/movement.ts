@@ -29,7 +29,6 @@ export function moveToEnd(editor: vscode.TextEditor) {
 
 export function selectNodes(
   editor: vscode.TextEditor,
-  ast: Node,
   openNode: Node,
   closeNode: Node
 ) {
@@ -104,7 +103,7 @@ export function selectCurrSexp(editor: vscode.TextEditor) {
   let openNode = currentNode.parent ?? currentNode;
   let closeNode = currentNode.getBlockClose();
 
-  selectNodes(editor, ast, openNode, closeNode);
+  selectNodes(editor, openNode, closeNode);
 }
 
 export function selectNode(editor: vscode.TextEditor) {
@@ -121,7 +120,7 @@ export function selectNode(editor: vscode.TextEditor) {
   editor.selection = new vscode.Selection(startPos, endPos);
 }
 
-export function pareditForward(editor: vscode.TextEditor) {
+export function pareditForward(editor: vscode.TextEditor, select: boolean) {
   let [ast, maxLine] = parseText(editor.document.getText());
   if (ast.type !== TokenType.Start) {
     return;
@@ -165,10 +164,14 @@ export function pareditForward(editor: vscode.TextEditor) {
     return;
   }
 
-  moveToNode(editor, nextNode);
+  if(select) {
+    selectNodes(editor, node, nextNode);
+  } else {
+    moveToNode(editor, nextNode);
+  }
 }
 
-export function pareditBackward(editor: vscode.TextEditor) {
+export function pareditBackward(editor: vscode.TextEditor, select: boolean) {
   let [ast, maxLine] = parseText(editor.document.getText());
   if (ast.type !== TokenType.Start) {
     return;
@@ -200,5 +203,9 @@ export function pareditBackward(editor: vscode.TextEditor) {
     return;
   }
 
-  moveToNode(editor, prevNode);
+  if(select) {
+    selectNodes(editor, prevNode, node);
+  } else {
+    moveToNode(editor, prevNode);
+  }
 }

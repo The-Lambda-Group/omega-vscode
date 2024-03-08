@@ -104,19 +104,29 @@
         "key": "Alt+Shift+e"
       },
       {
-        "command": "omega.pareditBackward",
-        "linux": "Alt+b",
-        "key": "Alt+b"
-      },
-      {
         "command": "omega.selectWord",
         "linux": "Alt+w",
         "key": "Alt+w"
       },
       {
+        "command": "omega.pareditBackward",
+        "linux": "Alt+b",
+        "key": "Alt+b"
+      },
+      {
         "command": "omega.pareditForward",
         "linux": "Alt+f",
         "key": "Alt+f"
+      },
+      {
+        "command": "omega.pareditSelectBackward",
+        "linux": "Alt+Shift+b",
+        "key": "Alt+Shift+b"
+      },
+      {
+        "command": "omega.pareditSelectForward",
+        "linux": "Alt+Shift+f",
+        "key": "Alt+Shift+f"
       }
     ],
     "menus": {

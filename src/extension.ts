@@ -103,7 +103,7 @@ export function activate(context: vscode.ExtensionContext) {
       return;
     }
 
-    pareditForward(editor);
+    pareditForward(editor, false);
   });
   vscode.commands.registerCommand("omega.pareditBackward", async () => {
     const editor = vscode.window.activeTextEditor;
@@ -111,7 +111,23 @@ export function activate(context: vscode.ExtensionContext) {
       return;
     }
 
-    pareditBackward(editor);
+    pareditBackward(editor, false);
+  });
+  vscode.commands.registerCommand("omega.pareditSelectForward", async () => {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      return;
+    }
+
+    pareditForward(editor, true);
+  });
+  vscode.commands.registerCommand("omega.pareditSelectBackward", async () => {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      return;
+    }
+
+    pareditBackward(editor, true);
   });
 
   context.subscriptions.push(
@@ -154,7 +170,7 @@ export function activate(context: vscode.ExtensionContext) {
       let line = selection.start.line;
       let pos = selection.start.character;
       const lineText = document.lineAt(selection.start).text;
-      let n = get_selected_node(ast, line, pos, lineText.substring(0, pos));
+      let n = get_selected_node(ast, line, pos, lineText);
 
       editBuilder.replace(range, format_doc(ast, maxLine));
     });

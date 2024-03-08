@@ -14,7 +14,7 @@ export function getCurrentNode(editor: vscode.TextEditor, parentNode: Node) {
     parentNode,
     line,
     pos,
-    lineText.substring(0, pos)
+    lineText
   );
   return selectedNode;
 }
@@ -388,7 +388,7 @@ function navLeft(shouldSelect: boolean) {
     ast,
     line,
     pos,
-    lineText.substring(0, pos)
+    lineText
   );
   if (selectedNode.parent === undefined) {
     return;

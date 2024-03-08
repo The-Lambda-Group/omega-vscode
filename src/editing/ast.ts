@@ -41,7 +41,7 @@ export enum TokenType {
   Newline,
   Start,
   Error,
-  End,
+  End
 }
 
 export class Node {
@@ -61,7 +61,7 @@ export class Node {
     blockPos: number
   ) {
     this.type = type;
-    this.text = text.trimStart().trimEnd();
+    this.text = type === TokenType.Newline ? "\n" : text.trimStart().trimEnd();
     this.children = [];
     this.line = line;
     this.linePos = linePos;
@@ -69,15 +69,7 @@ export class Node {
   }
 
   toString(): string {
-    let s =
-      "Line: " +
-      this.line +
-      ", linePos: " +
-      this.linePos +
-      ", blockPos" +
-      "this.blockPos" +
-      ", text: " +
-      this.text;
+    let s = "Line: " + this.line + ", linePos: " + this.linePos + ", blockPos" + "this.blockPos" + ", text: " + this.text;
     return s;
   }
 
@@ -132,13 +124,7 @@ export class Node {
   getPrevNode(): Node {
     let parent = this.parent;
     if (parent === undefined) {
-      return new Node(
-        TokenType.Error,
-        "No parent",
-        this.line,
-        this.linePos,
-        this.blockPos
-      );
+      return new Node(TokenType.Error, "No parent", this.line, this.linePos, this.blockPos);
     }
     let newSelectedNode;
     if (this.type === TokenType.Close) {
@@ -156,13 +142,7 @@ export class Node {
   getNextNode(): Node {
     let parent = this.parent;
     if (parent === undefined) {
-      return new Node(
-        TokenType.Error,
-        "No parent",
-        this.line,
-        this.linePos,
-        this.blockPos
-      );
+      return new Node(TokenType.Error, "No parent", this.line, this.linePos, this.blockPos);
     }
     let newSelectedNode;
     if (this.type === TokenType.Close) {
@@ -191,13 +171,7 @@ export class Node {
     } else {
       parent = this.parent;
       if (this.parent === undefined) {
-        return new Node(
-          TokenType.Error,
-          "No parent",
-          this.line,
-          this.linePos,
-          this.blockPos
-        );
+        return new Node(TokenType.Error, "No parent", this.line, this.linePos, this.blockPos);
       }
     }
 
@@ -243,14 +217,18 @@ export class Node {
   }
 }
 
-/* Text should end at the node position */
 export function get_selected_node(
   parentNode: Node,
   line: number,
   position: number,
   text: string
 ): Node {
-  let linePos = tokenize(text).length - 1;
+    /* If there's whitespace, there is guaranteed to be at least a trailing newline */
+  while(text[position] === "\t" || text[position] === " ") {
+    position++;
+  }
+  let lineText = text.substring(0, position);
+  let linePos =tokenize(lineText).length - 1;
   let nodes = parentNode.findNode(line, linePos);
   if (nodes.length === 0) {
     return new Node(TokenType.Start, "error", line, -1, -1);

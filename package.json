@@ -14,6 +14,13 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "configuration": {
+      "omega.host": {
+        "title": "Host Address",
+        "type": "string",
+        "default": "http://localhost:3001"
+      }
+    },
     "languages": [
       {
         "id": "oql",
@@ -54,6 +61,11 @@
       {
         "command": "omega.runBuffer",
         "title": "Omega: Evaluate Buffer",
+        "icon": "$(play)"
+      },
+      {
+        "command": "omega.setHost",
+        "title": "Omega: Set Host",
         "icon": "$(play)"
       }
     ],

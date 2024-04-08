@@ -3,7 +3,14 @@ import { OmegaDocumentProvider } from "./docs";
 import { DBNodeTreeItem, OmegaTreeViewProvider } from "./tree_node";
 import { open } from "fs";
 import { DatastoreNode } from "./tree_node/data_type/datastore";
-import { TokenType, format_doc, get_node_document_pos, get_selected_node, parse, parseText } from "./ast";
+import {
+  TokenType,
+  format_doc,
+  get_node_document_pos,
+  get_selected_node,
+  parse,
+  parseText,
+} from "./ast";
 import { runBuffer } from "./run";
 
 export function activate(context: vscode.ExtensionContext) {
@@ -25,9 +32,10 @@ export function activate(context: vscode.ExtensionContext) {
     nodeDependenciesProvider
   );
   vscode.commands.registerCommand("omega.fetchDatastore", () => {
-    DBNode.fetchChildren().then(
+    DBNode.fetchChildren()
+      .then
       /* Finished Getting Children */
-    );
+      ();
     vscode.window.showInformationMessage("NOT_IMPLEMENTED");
   });
   vscode.commands.registerCommand(
@@ -40,7 +48,7 @@ export function activate(context: vscode.ExtensionContext) {
     jumpToSpot(false, true);
   });
   vscode.commands.registerCommand("omega.navigateLeft", () => {
-   navLeft(false);
+    navLeft(false);
   });
   vscode.commands.registerCommand("omega.navigateSelectRight", () => {
     jumpToSpot(true, true);
@@ -64,55 +72,62 @@ export function activate(context: vscode.ExtensionContext) {
     let line = selection.start.line;
     let pos = selection.start.character;
     let lineText = editor.document.lineAt(line).text;
-    let selectedNode = get_selected_node(ast, line, pos, lineText.substring(0, pos));
+    let selectedNode = get_selected_node(
+      ast,
+      line,
+      pos,
+      lineText.substring(0, pos)
+    );
     if (selectedNode.parent === undefined) {
       return;
     }
     let prevSexp = selectedNode.parent;
     lineText = editor.document.lineAt(prevSexp.line).text;
     let newLinePos = get_node_document_pos(prevSexp, lineText);
-    if(newLinePos === undefined) {
+    if (newLinePos === undefined) {
       return;
     }
 
     /* Move the cursor */
-    let newPosition = editor.document.positionAt(editor.document.offsetAt(new vscode.Position(prevSexp.line, newLinePos)));
+    let newPosition = editor.document.positionAt(
+      editor.document.offsetAt(new vscode.Position(prevSexp.line, newLinePos))
+    );
     editor.selection = new vscode.Selection(newPosition, newPosition);
   });
 
-  context.subscriptions.push(vscode.workspace.onDidChangeTextDocument((event: vscode.TextDocumentChangeEvent) => {
-    // /* Check when we last ran aggressiveIndext */
-    // let lastRun = context.workspaceState.get<number>("LastAggressiveIndentTime");
-    // if (lastRun === undefined) {
-    //   lastRun = 0;
-    // }
-    // let currTime = new Date().getTime();
-    // if (currTime - lastRun < 100) {
-    //   return;
-    // }
+  // context.subscriptions.push(vscode.workspace.onDidChangeTextDocument((event: vscode.TextDocumentChangeEvent) => {
+  //   // /* Check when we last ran aggressiveIndext */
+  //   // let lastRun = context.workspaceState.get<number>("LastAggressiveIndentTime");
+  //   // if (lastRun === undefined) {
+  //   //   lastRun = 0;
+  //   // }
+  //   // let currTime = new Date().getTime();
+  //   // if (currTime - lastRun < 100) {
+  //   //   return;
+  //   // }
 
-    // /* Get the overall text range to map over */
-    // let range = event.contentChanges.map((reason) => reason.range).reduce((acc, elem) => {
-    //   let start = acc.start.isBefore(elem.start) ? acc.start : elem.start;
-    //   let end = acc.end.isAfter(elem.end) ? acc.end : elem.end;
-    //   return new vscode.Range(start, end);
-    // });
+  //   // /* Get the overall text range to map over */
+  //   // let range = event.contentChanges.map((reason) => reason.range).reduce((acc, elem) => {
+  //   //   let start = acc.start.isBefore(elem.start) ? acc.start : elem.start;
+  //   //   let end = acc.end.isAfter(elem.end) ? acc.end : elem.end;
+  //   //   return new vscode.Range(start, end);
+  //   // });
 
-    /* Format */
-    let n = event.contentChanges.length;
-    let x = event.contentChanges.map((reason) => {
-      let range = reason.range;
-      let newText = reason.text;
-      const editor = vscode.window.activeTextEditor;
-      if (!editor) {
-        return;
-      }
-      const document = editor.document;
-      formatRange(editor, document, range, newText);
-      // context.workspaceState.update("LastAggressiveIndentTime", currTime);
-    });
+  //   /* Format */
+  //   let n = event.contentChanges.length;
+  //   let x = event.contentChanges.map((reason) => {
+  //     let range = reason.range;
+  //     let newText = reason.text;
+  //     const editor = vscode.window.activeTextEditor;
+  //     if (!editor) {
+  //       return;
+  //     }
+  //     const document = editor.document;
+  //     formatRange(editor, document, range, newText);
+  //     // context.workspaceState.update("LastAggressiveIndentTime", currTime);
+  //   });
 
-  }));
+  // }));
   vscode.commands.registerCommand("omega.aggressiveIndent", () => {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
@@ -124,9 +139,12 @@ export function activate(context: vscode.ExtensionContext) {
       /* Error */
       return;
     }
-    editor.edit(editBuilder => {
+    editor.edit((editBuilder) => {
       let document = editor.document;
-      let range = new vscode.Range(document.positionAt(0), document.positionAt(document.getText().length));
+      let range = new vscode.Range(
+        document.positionAt(0),
+        document.positionAt(document.getText().length)
+      );
 
       const selection = editor.selection;
       let line = selection.start.line;
@@ -141,10 +159,26 @@ export function activate(context: vscode.ExtensionContext) {
   vscode.commands.registerCommand("omega.runBuffer", () => {
     runBuffer(outputChannel);
   });
+
+  vscode.commands.registerCommand("omega.setHost", () => {
+    vscode.window
+      .showInputBox({
+        prompt: "Enter the host address",
+        placeHolder: "e.g., http://example.com",
+        value: vscode.workspace.getConfiguration().get("omega.host") || "",
+      })
+      .then((host: any) => {
+        if (host !== undefined) {
+          vscode.workspace.getConfiguration().update("omega.host", host, vscode.ConfigurationTarget.Global);
+          vscode.window.showInformationMessage(`Host address set to: ${host}`);
+          console.log("HOST:", vscode.workspace.getConfiguration().get("omega.host"));
+        }
+      });
+  });
 }
 
 function getWordChars(): string[] {
-  return ['(', ')', '{', '}', '[', ']'];
+  return ["(", ")", "{", "}", "[", "]"];
 }
 
 function isWordChar(char: string): boolean {
@@ -153,22 +187,22 @@ function isWordChar(char: string): boolean {
 }
 
 function isWhiteSpaceChar(char: string): boolean {
-  let whitespaceChars = [' ', '\t', '\n'];
+  let whitespaceChars = [" ", "\t", "\n"];
   return whitespaceChars.includes(char);
 }
 
 function isPunctuationChar(char: string): boolean {
-  let punctuationChars = [',', ':'];
+  let punctuationChars = [",", ":"];
   return punctuationChars.includes(char);
 }
 
 function isBlockEndChar(char: string): boolean {
-  let wordChars = [')', '}', ']'];
+  let wordChars = [")", "}", "]"];
   return wordChars.includes(char);
 }
 
 function isBlockOpenChar(char: string): boolean {
-  let wordChars = ['(', '[', '{'];
+  let wordChars = ["(", "[", "{"];
   return wordChars.includes(char);
 }
 
@@ -177,13 +211,20 @@ function isWordOverChar(char: string): boolean {
 }
 
 function getPairOpposite(char: string): string {
-  let charsSet: Map<String, String> = new Map<string, string>([['[', ']'], ["(", ")"], ["{", "}"], [']', '['], [")", "("], ["}", "{"]]);
+  let charsSet: Map<String, String> = new Map<string, string>([
+    ["[", "]"],
+    ["(", ")"],
+    ["{", "}"],
+    ["]", "["],
+    [")", "("],
+    ["}", "{"],
+  ]);
   let other = charsSet.get(char)?.toString() ?? " ";
   return other;
 }
 
 function findBlockOpener(text: string, initialOffset: number): number {
-  let counts = new Map<string, number>(getWordChars().map(elem => [elem, 0]));
+  let counts = new Map<string, number>(getWordChars().map((elem) => [elem, 0]));
   for (let i = initialOffset; i >= 0; i--) {
     if (isBlockOpenChar(text[i])) {
       let pairOppositeCount = counts.get(getPairOpposite(text[i])) ?? 0;
@@ -200,7 +241,11 @@ function findBlockOpener(text: string, initialOffset: number): number {
   return -1;
 }
 
-function findNextWordChar(text: string, rangeEndChar: string, initialOffset: number): number {
+function findNextWordChar(
+  text: string,
+  rangeEndChar: string,
+  initialOffset: number
+): number {
   let offset = initialOffset;
   while (offset < text.length) {
     offset++;
@@ -212,7 +257,10 @@ function findNextWordChar(text: string, rangeEndChar: string, initialOffset: num
   return -1;
 }
 
-function findPrevWordChar(text: string, initialOffset: number): [string, number] {
+function findPrevWordChar(
+  text: string,
+  initialOffset: number
+): [string, number] {
   let offset = initialOffset;
   while (offset > 0) {
     offset--;
@@ -224,13 +272,27 @@ function findPrevWordChar(text: string, initialOffset: number): [string, number]
   return [" ", -1];
 }
 
-function getFormatRange(text: string, startOffset: number, endOffset: number): [number, number] {
-  const [rangeStartChar, rangeStartOffset] = findPrevWordChar(text, startOffset);
-  let rangeEndOffset = findNextWordChar(text, getPairOpposite(rangeStartChar), startOffset);
+function getFormatRange(
+  text: string,
+  startOffset: number,
+  endOffset: number
+): [number, number] {
+  const [rangeStartChar, rangeStartOffset] = findPrevWordChar(
+    text,
+    startOffset
+  );
+  let rangeEndOffset = findNextWordChar(
+    text,
+    getPairOpposite(rangeStartChar),
+    startOffset
+  );
   return [rangeStartOffset, rangeEndOffset];
 }
 
-export function findPreviousWordStart(text: string, initialOffset: number): number {
+export function findPreviousWordStart(
+  text: string,
+  initialOffset: number
+): number {
   let currentOffset = initialOffset;
   if (initialOffset > text.length) {
     return -1;
@@ -246,11 +308,22 @@ export function findPreviousWordStart(text: string, initialOffset: number): numb
     if (isWordChar(text[currentOffset])) {
       if (isBlockEndChar(text[currentOffset])) {
         /* Find start of block */
-        return findNextBalancedChar(text, text[currentOffset], getPairOpposite(text[currentOffset]), currentOffset, false);
+        return findNextBalancedChar(
+          text,
+          text[currentOffset],
+          getPairOpposite(text[currentOffset]),
+          currentOffset,
+          false
+        );
       }
       return currentOffset + 1;
-    } else if (isWhiteSpaceChar(text[currentOffset]) || isPunctuationChar(text[currentOffset])) {
-      if (newWordStarted) { return currentOffset + 1; }
+    } else if (
+      isWhiteSpaceChar(text[currentOffset]) ||
+      isPunctuationChar(text[currentOffset])
+    ) {
+      if (newWordStarted) {
+        return currentOffset + 1;
+      }
       whitespaceTouched = true;
       continue;
     } else if (whitespaceTouched && newWordStarted === false) {
@@ -271,10 +344,13 @@ function formatRange(
     /* Delete everything after the \n */
     let oldLine = document.lineAt(range.start.line).text;
     let prevWordStart = findPreviousWordStart(oldLine, range.start.character);
-    let leadingTabCount = oldLine.substring(0, prevWordStart).match("/\t/g")?.length ?? 0;
-    let leadingWhitespace = "\t".repeat(leadingTabCount).concat(" ".repeat(prevWordStart - leadingTabCount));
+    let leadingTabCount =
+      oldLine.substring(0, prevWordStart).match("/\t/g")?.length ?? 0;
+    let leadingWhitespace = "\t"
+      .repeat(leadingTabCount)
+      .concat(" ".repeat(prevWordStart - leadingTabCount));
 
-    editor.edit(editBuilder => {
+    editor.edit((editBuilder) => {
       let pos = document.positionAt(startIndex + 1);
       let line = document.lineAt(pos.line);
       let lineText = line.text;
@@ -282,15 +358,24 @@ function formatRange(
       editBuilder.replace(line.range, newNewLine);
     });
   }
-};
+}
 
-async function balanceLines(editor: vscode.TextEditor,
+async function balanceLines(
+  editor: vscode.TextEditor,
   line1: string,
-  line2: vscode.TextLine): Promise<string> {
+  line2: vscode.TextLine
+): Promise<string> {
   let leadingWhiteSpace = line1.length - line1.trimStart().length;
-  let leadingTabCount = line1.substring(0, leadingWhiteSpace).match("/\t/g")?.length ?? 0;
-  let newLine2 = "\t".repeat(leadingTabCount).concat(" ".repeat(leadingWhiteSpace - leadingTabCount).concat(line2.text.trimStart().trimEnd()));
-  await editor.edit(editBuilder => {
+  let leadingTabCount =
+    line1.substring(0, leadingWhiteSpace).match("/\t/g")?.length ?? 0;
+  let newLine2 = "\t"
+    .repeat(leadingTabCount)
+    .concat(
+      " "
+        .repeat(leadingWhiteSpace - leadingTabCount)
+        .concat(line2.text.trimStart().trimEnd())
+    );
+  await editor.edit((editBuilder) => {
     editBuilder.replace(line2.range, newLine2);
   });
   return newLine2;
@@ -302,11 +387,21 @@ function getSurroundingBlock(text: string, offset: number): [number, number] {
   if (openOffset === -1) {
     return [-1, -1];
   }
-  let closeOffset = findNextBalancedChar(text, text[openOffset], getPairOpposite(text[openOffset]), offset, true);
+  let closeOffset = findNextBalancedChar(
+    text,
+    text[openOffset],
+    getPairOpposite(text[openOffset]),
+    offset,
+    true
+  );
   return [openOffset, closeOffset];
 }
 
-async function format_block(editor: vscode.TextEditor, document: vscode.TextDocument, range: vscode.Range) {
+async function format_block(
+  editor: vscode.TextEditor,
+  document: vscode.TextDocument,
+  range: vscode.Range
+) {
   let currLine = document.lineAt(range.start.line).text;
   let endLine = document.lineAt(range.end.line);
 
@@ -320,7 +415,11 @@ async function format_surrounding_region(editor: vscode.TextEditor) {
   let document = editor.document;
   let startPos = document.offsetAt(editor.selection.active);
   let [start, end] = getSurroundingBlock(document.getText(), startPos);
-  await format_block(editor, document, new vscode.Range(document.positionAt(start), document.positionAt(end)));
+  await format_block(
+    editor,
+    document,
+    new vscode.Range(document.positionAt(start), document.positionAt(end))
+  );
 }
 
 function aggressiveIndent(range: vscode.Range) {
@@ -344,11 +443,19 @@ function aggressiveIndent(range: vscode.Range) {
   // });
 }
 
-function findNextWhiteSpace(text: string, startIndex: number, forward: boolean): number {
+function findNextWhiteSpace(
+  text: string,
+  startIndex: number,
+  forward: boolean
+): number {
   let whitespaceChars = [" ", "\t", "\n"];
   const direction = forward ? 1 : -1;
   let count = 0;
-  for (let i = startIndex + direction; forward ? i < text.length : i >= 0; i += direction) {
+  for (
+    let i = startIndex + direction;
+    forward ? i < text.length : i >= 0;
+    i += direction
+  ) {
     const currentChar = text[i];
     if (whitespaceChars.includes(currentChar)) {
       return i;
@@ -357,10 +464,20 @@ function findNextWhiteSpace(text: string, startIndex: number, forward: boolean):
   return -1;
 }
 
-function findNextBalancedChar(text: string, haveChar: string, oppositeChar: string, startIndex: number, forward: boolean): number {
+function findNextBalancedChar(
+  text: string,
+  haveChar: string,
+  oppositeChar: string,
+  startIndex: number,
+  forward: boolean
+): number {
   const direction = forward ? 1 : -1;
   let count = 0;
-  for (let i = startIndex + direction; forward ? i < text.length : i >= 0; i += direction) {
+  for (
+    let i = startIndex + direction;
+    forward ? i < text.length : i >= 0;
+    i += direction
+  ) {
     const currentChar = text[i];
     if (haveChar === currentChar) {
       count++;
@@ -374,7 +491,11 @@ function findNextBalancedChar(text: string, haveChar: string, oppositeChar: stri
   return -1;
 }
 
-function find_format_range(text: string, startOffset: number, endOffset: number): [number, number] {
+function find_format_range(
+  text: string,
+  startOffset: number,
+  endOffset: number
+): [number, number] {
   /* Find first opening parenthesis */
   let paren_count = 0;
   let start = -1;
@@ -382,32 +503,29 @@ function find_format_range(text: string, startOffset: number, endOffset: number)
 
   for (let i = startOffset; i >= 0; i--) {
     let char = text[i];
-    if (char === '(') {
+    if (char === "(") {
       if (paren_count === 0) {
         start = i;
         break;
       }
       paren_count--;
-    }
-    else if (char === ')') {
+    } else if (char === ")") {
       paren_count++;
     }
   }
 
   for (let i = endOffset; i < text.length; i++) {
     let char = text[i];
-    if (char === '(') {
+    if (char === "(") {
       if (paren_count === 0) {
         start = i;
         break;
       }
       paren_count--;
-    }
-    else if (char === ')') {
+    } else if (char === ")") {
       paren_count++;
     }
   }
-
 
   return [0, 0];
 }
@@ -428,7 +546,12 @@ function navLeft(shouldSelect: boolean) {
   let line = selection.start.line;
   let pos = selection.start.character;
   let lineText = editor.document.lineAt(line).text;
-  let selectedNode = get_selected_node(ast, line, pos, lineText.substring(0, pos));
+  let selectedNode = get_selected_node(
+    ast,
+    line,
+    pos,
+    lineText.substring(0, pos)
+  );
   if (selectedNode.parent === undefined) {
     return;
   }
@@ -437,15 +560,17 @@ function navLeft(shouldSelect: boolean) {
   if (newSelectedNode.type === TokenType.Error) {
     return;
   }
-  
+
   lineText = editor.document.lineAt(newSelectedNode.line).text;
   let newLinePos = get_node_document_pos(newSelectedNode, lineText);
-  if(newLinePos === undefined) {
+  if (newLinePos === undefined) {
     return;
   }
 
   /* Move the cursor */
-  let newPosition = editor.document.positionAt(editor.document.offsetAt(new vscode.Position(parent.line, newLinePos)));
+  let newPosition = editor.document.positionAt(
+    editor.document.offsetAt(new vscode.Position(parent.line, newLinePos))
+  );
   editor.selection = new vscode.Selection(newPosition, newPosition);
 }
 
@@ -456,15 +581,24 @@ function jumpToSpot(select: boolean, forward: boolean) {
   }
 
   // "\"", "\'", "\(", "\)", "\{", "\}", "\t", "\n", " "];
-  let openChars = ["\"", "\'", "\(", "\{", "\t", "\n", " "];
-  let closeChars = ["\"", "\'", "\)", "\}", "\t", "\n", " "];
-  let charsSet: Map<String, String> = new Map<string, string>([['"', '"'], ["'", "'"], ["(", ")"], ["{", "}"]]);
+  let openChars = ['"', "'", "(", "{", "\t", "\n", " "];
+  let closeChars = ['"', "'", ")", "}", "\t", "\n", " "];
+  let charsSet: Map<String, String> = new Map<string, string>([
+    ['"', '"'],
+    ["'", "'"],
+    ["(", ")"],
+    ["{", "}"],
+  ]);
   if (!forward) {
-    closeChars = ["\"", "\'", "\(", "\{", "\t", "\n", " "];
-    openChars = ["\"", "\'", "\)", "\}", "\t", "\n", " "];
-    charsSet = new Map<string, string>([['"', '"'], ["'", "'"], [")", "("], ["}", "{"]]);
+    closeChars = ['"', "'", "(", "{", "\t", "\n", " "];
+    openChars = ['"', "'", ")", "}", "\t", "\n", " "];
+    charsSet = new Map<string, string>([
+      ['"', '"'],
+      ["'", "'"],
+      [")", "("],
+      ["}", "{"],
+    ]);
   }
-
 
   const document = editor.document;
   const selection = editor.selection;
@@ -476,31 +610,44 @@ function jumpToSpot(select: boolean, forward: boolean) {
   let oppositeChar = charsSet.get(currentChar);
   let nextIndex = -1;
   if (oppositeChar === undefined) {
-    nextIndex = findNextWhiteSpace(text, forward ? endOffset : startOffset, forward);
+    nextIndex = findNextWhiteSpace(
+      text,
+      forward ? endOffset : startOffset,
+      forward
+    );
   } else {
-    nextIndex = findNextBalancedChar(text, currentChar, oppositeChar.toString(), forward ? endOffset : startOffset, forward);
+    nextIndex = findNextBalancedChar(
+      text,
+      currentChar,
+      oppositeChar.toString(),
+      forward ? endOffset : startOffset,
+      forward
+    );
   }
 
   if (nextIndex !== -1) {
     if (select) {
       if (forward) {
-        editor.selection = new vscode.Selection(selection.start, document.positionAt(nextIndex + 1));
+        editor.selection = new vscode.Selection(
+          selection.start,
+          document.positionAt(nextIndex + 1)
+        );
       } else {
-        editor.selection = new vscode.Selection(document.positionAt(endOffset + 1), document.positionAt(nextIndex));
+        editor.selection = new vscode.Selection(
+          document.positionAt(endOffset + 1),
+          document.positionAt(nextIndex)
+        );
       }
-    }
-    else {
+    } else {
       let newPosition;
       if (forward) {
         newPosition = document.positionAt(nextIndex + 1);
-      }
-      else {
+      } else {
         newPosition = document.positionAt(nextIndex);
       }
       editor.selection = new vscode.Selection(newPosition, newPosition);
     }
   }
-
 }
 
-export function deactivate() { }
+export function deactivate() {}

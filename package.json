@@ -97,13 +97,48 @@
       },
       {
         "command": "omega.sexpStart",
+        "linux": "Alt+s",
+        "key": "Alt+s"
+      },
+      {
+        "command": "omega.selectSexp",
         "linux": "Alt+Shift+s",
         "key": "Alt+Shift+s"
+      },
+      {
+        "command": "omega.sexpEnd",
+        "linux": "Alt+e",
+        "key": "Alt+Shift+e"
       },
       {
         "command": "omega.runBuffer",
         "linux": "Alt+Shift+e",
         "key": "Alt+Shift+e"
+      },
+      {
+        "command": "omega.selectWord",
+        "linux": "Alt+w",
+        "key": "Alt+w"
+      },
+      {
+        "command": "omega.pareditBackward",
+        "linux": "Alt+b",
+        "key": "Alt+b"
+      },
+      {
+        "command": "omega.pareditForward",
+        "linux": "Alt+f",
+        "key": "Alt+f"
+      },
+      {
+        "command": "omega.pareditSelectBackward",
+        "linux": "Alt+Shift+b",
+        "key": "Alt+Shift+b"
+      },
+      {
+        "command": "omega.pareditSelectForward",
+        "linux": "Alt+Shift+f",
+        "key": "Alt+Shift+f"
       }
     ],
     "menus": {

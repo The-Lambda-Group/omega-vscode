@@ -2,17 +2,6 @@ import * as vscode from "vscode";
 import { OmegaDocumentProvider } from "./docs";
 import { DBNodeTreeItem, OmegaTreeViewProvider } from "./tree_node";
 import { DatastoreNode } from "./tree_node/data_type/datastore";
-<<<<<<< HEAD
-import {
-  TokenType,
-  format_doc,
-  get_node_document_pos,
-  get_selected_node,
-  parse,
-  parseText,
-} from "./ast";
-=======
->>>>>>> 0c585805c216d87c0866d3b90f7f1df861c5f41d
 import { runBuffer } from "./run";
 import {
   TokenType,

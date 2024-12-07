@@ -10,23 +10,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout the code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Set up Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16' # Match the Node.js version required by `vsce`
+          node-version: '16'
 
-      # Install dependencies
       - name: Install dependencies
-        run: npm install
+        run: |
+          npm install
+          npm install -g @vscode/vsce
 
-      # Authenticate vsce using the Personal Access Token
-      - name: Authenticate vsce
+      - name: Publish
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: npx vsce publish
+        run: vsce publish
 

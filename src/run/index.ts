@@ -1,6 +1,5 @@
-import * as vscode from "vscode";
 import axios from "axios";
-import { channel } from "diagnostics_channel";
+import * as vscode from "vscode";
 
 export const queryContent = (host: string, query: string) =>
   axios

@@ -2,7 +2,7 @@
   "name": "omega",
   "displayName": "OmegaDB",
   "description": "Omega DB Devtools",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publisher": "OmegaDB",
   "engines": {
     "vscode": "^1.85.0"
@@ -13,6 +13,7 @@
   "activationEvents": [
     "onCommand:omega.navigateRight"
   ],
+  "icon": "resources/logo.png",
   "main": "./out/extension.js",
   "contributes": {
     "configuration": {

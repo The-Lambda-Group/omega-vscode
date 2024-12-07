@@ -1,8 +1,9 @@
 {
   "name": "omega",
-  "displayName": "Omega",
+  "displayName": "OmegaDB",
   "description": "Omega DB Devtools",
   "version": "0.0.1",
+  "publisher": "OmegaDB",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -192,5 +193,9 @@
   },
   "dependencies": {
     "axios": "^1.6.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/The-Lambda-Group/omega-vscode.git"
   }
 }

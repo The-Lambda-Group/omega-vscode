@@ -2,16 +2,13 @@
   "name": "omega",
   "displayName": "OmegaDB",
   "description": "Omega DB Devtools",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "publisher": "OmegaDB",
   "engines": {
     "vscode": "^1.85.0"
   },
   "categories": [
     "Other"
-  ],
-  "activationEvents": [
-    "onCommand:omega.navigateRight"
   ],
   "icon": "resources/logo.png",
   "main": "./out/extension.js",
@@ -46,21 +43,6 @@
     ],
     "commands": [
       {
-        "command": "omega.fetchDatastore",
-        "title": "Omega: Refresh",
-        "icon": "$(refresh)"
-      },
-      {
-        "command": "omega.editEntry",
-        "title": "Omega: Edit Item",
-        "icon": "$(pencil)"
-      },
-      {
-        "command": "omega.deleteEntry",
-        "title": "Omega: Delete Item",
-        "icon": "$(trash)"
-      },
-      {
         "command": "omega.runBuffer",
         "title": "Omega: Evaluate Buffer",
         "icon": "$(play)"
@@ -73,105 +55,11 @@
     ],
     "keybindings": [
       {
-        "command": "omega.navigateRight",
-        "linux": "Alt+right",
-        "key": "Alt+right"
-      },
-      {
-        "command": "omega.navigateLeft",
-        "linux": "Alt+left",
-        "key": "Alt+left"
-      },
-      {
-        "command": "omega.navigateSelectRight",
-        "linux": "Alt+Shift+right",
-        "key": "Alt+Shift+right"
-      },
-      {
-        "command": "omega.navigateSelectLeft",
-        "linux": "Alt+Shift+left",
-        "key": "Alt+Shift+left"
-      },
-      {
-        "command": "omega.aggressiveIndent",
-        "linux": "Alt+Shift+f",
-        "key": "Alt+Shift+f"
-      },
-      {
-        "command": "omega.sexpStart",
-        "linux": "Alt+s",
-        "key": "Alt+s"
-      },
-      {
-        "command": "omega.selectSexp",
-        "linux": "Alt+Shift+s",
-        "key": "Alt+Shift+s"
-      },
-      {
-        "command": "omega.sexpEnd",
-        "linux": "Alt+e",
-        "key": "Alt+Shift+e"
-      },
-      {
         "command": "omega.runBuffer",
         "linux": "Alt+Shift+e",
         "key": "Alt+Shift+e"
-      },
-      {
-        "command": "omega.selectWord",
-        "linux": "Alt+w",
-        "key": "Alt+w"
-      },
-      {
-        "command": "omega.pareditBackward",
-        "linux": "Alt+b",
-        "key": "Alt+b"
-      },
-      {
-        "command": "omega.pareditForward",
-        "linux": "Alt+f",
-        "key": "Alt+f"
-      },
-      {
-        "command": "omega.pareditSelectBackward",
-        "linux": "Alt+Shift+b",
-        "key": "Alt+Shift+b"
-      },
-      {
-        "command": "omega.pareditSelectForward",
-        "linux": "Alt+Shift+f",
-        "key": "Alt+Shift+f"
       }
-    ],
-    "menus": {
-      "view/title": [
-        {
-          "command": "omega.fetchDatastore",
-          "when": "view == omegaDatastores",
-          "group": "navigation"
-        }
-      ],
-      "view/item/context": [
-        {
-          "command": "omega.editEntry",
-          "when": "view == omegaDatastores",
-          "group": "inline"
-        },
-        {
-          "command": "omega.deleteEntry",
-          "when": "view == omegaDatastores",
-          "group": "inline"
-        }
-      ]
-    },
-    "views": {
-      "explorer": [
-        {
-          "id": "omegaDatastores",
-          "name": "Omega Datastores"
-        }
-      ]
-    }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

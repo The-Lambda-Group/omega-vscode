@@ -17,3 +17,13 @@ Sets the OmegaDB connection
   "omega.host": "http://localhost"
 }
 ```
+
+### Omega Environment Name
+
+Sets the OmegaDB environment. Optionally this can be set to null.
+
+```json
+{
+  "omega.envName": "my-project/test",
+}
+```

@@ -2,7 +2,7 @@
   "name": "omega",
   "displayName": "OmegaDB",
   "description": "Omega DB Devtools",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "publisher": "OmegaDB",
   "engines": {
     "vscode": "^1.85.0"

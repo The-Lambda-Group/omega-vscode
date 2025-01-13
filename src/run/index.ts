@@ -1,16 +1,31 @@
 import axios from "axios";
 import * as vscode from "vscode";
 
+const constructUrlParams = (
+  baseUrl: string,
+  params: { [key: string]: string }
+) => {
+  const queryString = Object.entries(params)
+    .map(
+      ([key, value]) =>
+        `${encodeURIComponent(key)}=${encodeURIComponent(value)}`
+    )
+    .join("&");
+
+  return `${baseUrl}?${queryString}`;
+};
+
 export const queryContent = (
   host: string,
   query: string,
   config: { oqlEnvName?: string } = {}
 ) => {
   const { oqlEnvName } = config;
-  const envNameHeaders = oqlEnvName ? { OQL_ENV_NAME: oqlEnvName } : {};
+  const envNameHeaders: any = oqlEnvName ? { oql_env_name: oqlEnvName } : {};
+  const fullUrl = constructUrlParams(`${host}/query_clj`, envNameHeaders);
   const headers = { "Content-Type": "http/plain-text", ...envNameHeaders };
   return axios
-    .post(`${host}/query_clj`, query, { headers })
+    .post(fullUrl, query, { headers })
     .catch((e) => ({ error: e.response.data }))
     .then((r: any) => r?.data?.result?.data || r?.data?.result || r);
 };
